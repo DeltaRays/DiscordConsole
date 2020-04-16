@@ -1,0 +1,19 @@
+#Configuration file for DiscordConsole
+#Made by DeltaRays (DeltaRays#0054 on Discord)
+
+#The discord bot's token, if you don't know how to get it this is how to:
+#Go to https://discordapp.com/developers/applications/, if you haven't created the application yet create one, otherwise open the application
+#go to the Bot section and create a new bot, then copy the token and paste it in here
+BotToken: "TOKEN"
+
+#The id of the channel the console logs are going to be sent to, if you don't know how to get it this is how to:
+#go to your discord settings, in the Appearance tab scroll down to Advanced and there enable Developer Mode,
+#Exit the settings and right click on the channel you want the logs to send to,
+#and click on "Copy ID" to copy the id, and paste it in here
+ChannelId: "000000000000000000"
+
+#In seconds, every how often the logs should be sent to the channel (minimum is 1 second)
+ChannelRefreshRate: 2
+
+#Whether anything typed in the console channel should be sent to the server as a console command, can be either true or false
+ConsoleCommandsEnabled: true

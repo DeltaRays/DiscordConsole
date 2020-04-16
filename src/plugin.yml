@@ -1,0 +1,6 @@
+main: io.github.deltarays.discordconsole.Main
+name: DiscordConsole
+version: 1.0.0
+author: DeltaRays
+api-version: 1.15
+description: Connect your minecraft console to a discord channel!
