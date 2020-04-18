@@ -84,6 +84,7 @@ public class LogAppender extends AbstractAppender {
         LogEvent log = event.toImmutable();
         String message = log.getMessage().getFormattedMessage();
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+
         message = String.format("[%s] [%s/%s] %s", formatter.format(new Date(event.getTimeMillis())), event.getThreadName(), event.getLevel().toString(), message);
         message = message.replaceAll("\\[m|\\[([0-9]{1,2}[;m]?){3}|\u001b+", "").replaceAll("\\x1b\\[[0-9;]*[A-Za-z]\\]*", "").replace("_", "\\_").replace("*", "\\*").replace("~", "\\~");;
         msgs.add(message);

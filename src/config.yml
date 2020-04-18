@@ -17,3 +17,6 @@ ChannelRefreshRate: 2
 
 #Whether anything typed in the console channel should be sent to the server as a console command, can be either true or false
 ConsoleCommandsEnabled: true
+
+#Whether the debug messages should be sent in console
+Debug: false

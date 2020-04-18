@@ -3,12 +3,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.util.Set;
 
 public class Main extends JavaPlugin {
     private static final Logger logger = (Logger) LogManager.getRootLogger();
@@ -17,7 +19,6 @@ public class Main extends JavaPlugin {
         loadConfig();
         if(getConfig().getString("ChannelId") == "000000000000000000"){
             getLogger().severe(ChatColor.DARK_RED + "No channel id was provided! Go to the plugins folder, DiscordConsole, config.yml to set the channel id");
-
             getServer().getPluginManager().disablePlugin(this);
         }
         try {
@@ -27,9 +28,13 @@ public class Main extends JavaPlugin {
             logger.addAppender(appender);
             Bukkit.getConsoleSender().sendMessage("DiscordConsole has been enabled!");
         } catch (Exception e)  {
-            getLogger().severe(e.toString());
+            if(getConfig().getBoolean("Debug")) {
+                getLogger().severe(e.toString());
+            }
         }
     }
+
+
     @Override
     public void onDisable() {
         getLogger().info("DiscordConsole has been successfully disabled!");
