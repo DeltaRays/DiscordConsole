@@ -3,14 +3,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.util.Set;
 
 public class Main extends JavaPlugin {
     private static final Logger logger = (Logger) LogManager.getRootLogger();
@@ -22,8 +20,7 @@ public class Main extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
         }
         try {
-            DiscordSocket socket = new DiscordSocket(URI.create(getDiscordWSUrl()), this);
-            socket.connect();
+            socketConnect();
             LogAppender appender = new LogAppender(this);
             logger.addAppender(appender);
             Bukkit.getConsoleSender().sendMessage("DiscordConsole has been enabled!");
@@ -33,7 +30,10 @@ public class Main extends JavaPlugin {
             }
         }
     }
-
+    public void socketConnect() throws Exception {
+        DiscordSocket socket = new DiscordSocket(URI.create(getDiscordWSUrl()), this);
+        socket.connect();
+    }
 
     @Override
     public void onDisable() {

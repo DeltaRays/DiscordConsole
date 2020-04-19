@@ -75,6 +75,8 @@ public class DiscordSocket extends WebSocketClient {
 
                         }
                     } catch(Exception e){
+                        timer.cancel();
+                        timer.purge();
                         if(main.getConfig().getBoolean("Debug")){
                             main.getLogger().severe("[WebSocket] Error in sending heartbeat!\n"+ e.toString());
                         }
@@ -119,9 +121,12 @@ public class DiscordSocket extends WebSocketClient {
                 main.getLogger().severe("Invalid token provided");
                 main.getServer().getPluginManager().disablePlugin(main);
             }
-            main.getLogger().info("Disconnected from WebSocket, reconnecting...");
-            String resp = String.format("{\"op\":2, \"d\": {\"token\":\"%s\", \"properties\": {\"$os\": \"linux\", \"$browser\": \"my_library\", \"$device\":\"my_library\"}}}", token);
-            send(resp);
+            main.getLogger().info("[Discord WebSocket] Got disconnected, reconnecting...");
+            try {
+                main.socketConnect();
+            } catch (Exception e) {
+                main.getLogger().severe("[Discord WebSocket] Failure to reconnect!\n" + e.toString());
+            }
         } else {
             main.getLogger().severe(String.format("[Discord WebSocket] Disconnected\nCode: %s\nReason: %s", code, reason));
         }
