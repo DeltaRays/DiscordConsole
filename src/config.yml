@@ -13,7 +13,7 @@ BotToken: "TOKEN"
 ChannelId: "000000000000000000"
 
 #In seconds, every how often the logs should be sent to the channel (minimum is 1 second)
-ChannelRefreshRate: 2
+ChannelRefreshRate: 1
 
 #Whether anything typed in the console channel should be sent to the server as a console command, can be either true or false
 ConsoleCommandsEnabled: true

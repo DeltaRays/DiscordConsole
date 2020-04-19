@@ -12,11 +12,19 @@ public class DiscordSocket extends WebSocketClient {
     Boolean isInvalid = false;
     String botId = "";
     Main main;
+    String sessionId = "";
+    Boolean resume;
+    public DiscordSocket(URI serverUri, Main main, String sessionId) {
+        super(serverUri);
+        this.main = main;
+        this.sessionId = sessionId;
+        this.resume = true;
+    }
     public DiscordSocket(URI serverUri, Main main) {
         super(serverUri);
         this.main = main;
+        this.resume = false;
     }
-
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
@@ -33,30 +41,28 @@ public class DiscordSocket extends WebSocketClient {
         if(s != "null"){
             lastS = s;
         }
-        if(main.getConfig().getString("BotToken").equals("TOKEN")){
-            isInvalid = true;
-            Bukkit.getScheduler().runTask(main, () -> {
-                main.getLogger().severe(ChatColor.DARK_RED +"No bot token was provided! Go to the plugins folder, DiscordConsole, config.yml to set the bot token");
-                main.getServer().getPluginManager().disablePlugin(main);
-            });
-        }
         if(!main.getConfig().getString("BotToken").matches("^(?i)[a-z0-9.\\-_]{32,100}$")){
             isInvalid = true;
             Bukkit.getScheduler().runTask(main, () -> {
                 main.getLogger().severe(ChatColor.DARK_RED +"An invalid bot token was provided! Go to the plugins folder, DiscordConsole, config.yml to modify the bot token");
-                main.getServer().getPluginManager().disablePlugin(main);
             });
         }
         String t =  msg.replaceAll(".*\"t\":(.+?)(,|\\{).*", "$1");
         if(t.contains("READY")){
             main.getLogger().info("Successfully connected to the bot!");
+            if(!resume) sessionId = msg.replaceAll(".*\"session_id\":(.+?)(,|\\{).*", "$1");
             botId =  msg.replaceFirst(".*\"user\":\\{.*\"id\":\"(.+?)\"(,|\\{).*", "$1");
         } else if(op== 10){
             Double heartbeat_interval = Double.valueOf(msg.replaceAll(".*\"heartbeat_interval\":(.+?)(,|\\{).*", "$1"));
             Integer hb_i = Math.toIntExact(Math.round(heartbeat_interval));
             main.getLogger().info("Connecting to the discord bot");
-            String resp = String.format("{\"op\":2, \"d\": {\"token\":\"%s\", \"properties\": {\"$os\": \"linux\", \"$browser\": \"my_library\", \"$device\":\"my_library\"}}}", main.getConfig().getString("BotToken"));
-            send(resp);
+            if(!resume) {
+                String resp = String.format("{\"op\":2, \"d\": {\"token\":\"%s\", \"properties\": {\"$os\": \"linux\", \"$browser\": \"my_library\", \"$device\":\"my_library\"}}}", main.getConfig().getString("BotToken"));
+                send(resp);
+            } else {
+                String resp = String.format("{\"op\":6,\"d\":{\"token\":\"%s\",\"session_id\":\"%s\",\"seq\": %s}}", main.getConfig().getString("BotToken"), sessionId, lastS);
+                send(resp);
+            }
             Timer timer = new Timer();
             timer.scheduleAtFixedRate(new TimerTask() {
 
@@ -115,20 +121,19 @@ public class DiscordSocket extends WebSocketClient {
             isInvalid = true;
             main.getLogger().severe("An invalid discord bot token was provided!");
             return;
-        } else if(code == 1001){
+        } else if(code == 1001 || code == 1006){
             String token = main.getConfig().getString("BotToken");
             if(!token.matches("^(?i)[a-z0-9.\\-_]{32,100}$")){
                 main.getLogger().severe("Invalid token provided");
-                main.getServer().getPluginManager().disablePlugin(main);
             }
             main.getLogger().info("[Discord WebSocket] Got disconnected, reconnecting...");
             try {
-                main.socketConnect();
+                main.socketConnect(sessionId);
             } catch (Exception e) {
                 main.getLogger().severe("[Discord WebSocket] Failure to reconnect!\n" + e.toString());
             }
         } else {
-            main.getLogger().severe(String.format("[Discord WebSocket] Disconnected\nCode: %s\nReason: %s", code, reason));
+            main.getLogger().severe(String.format("[Discord WebSocket] WebSocket closed!\nCode: %s\nReason: %s", code, reason));
         }
 
     }

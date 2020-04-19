@@ -1,6 +1,8 @@
 package io.github.deltarays.discordconsole;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.message.Message;
 import org.bukkit.Bukkit;
+import org.bukkit.event.Listener;
 import org.json.simple.JSONObject;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
@@ -10,8 +12,9 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class LogAppender extends AbstractAppender {
+public class LogAppender extends AbstractAppender  {
     Main main;
+    Boolean isInvalid = false;
     Queue<String> msgs = new LinkedList<String>();
     public LogAppender(Main main) {
         super("DiscordConsoleLogAppender", null, null);
@@ -42,8 +45,11 @@ public class LogAppender extends AbstractAppender {
                             Integer responsecode = con.getResponseCode();
                             if(responsecode == 404){
                                 Bukkit.getScheduler().runTask(main, () -> {
-                                    main.getLogger().severe("An incorrect channel id was provided!");
-                                    main.getServer().getPluginManager().disablePlugin(main);
+                                    if(!isInvalid){
+                                        main.getLogger().severe("An incorrect channel id was provided!");
+                                    }
+                                    isInvalid = true;
+
                                 });
                             }
                             message = new StringBuilder();
@@ -68,8 +74,10 @@ public class LogAppender extends AbstractAppender {
                         Integer responsecode = con.getResponseCode();
                         if(responsecode == 404){
                             Bukkit.getScheduler().runTask(main, () -> {
-                                main.getLogger().severe("An incorrect channel id was provided!");
-                                main.getServer().getPluginManager().disablePlugin(main);
+                                if(!isInvalid){
+                                    main.getLogger().severe("An incorrect channel id was provided!");
+                                }
+                                isInvalid = true;
                             });
                         }
                     };
@@ -81,10 +89,9 @@ public class LogAppender extends AbstractAppender {
     }
     @Override
     public void append(LogEvent event) {
-        LogEvent log = event.toImmutable();
-        String message = log.getMessage().getFormattedMessage();
+        event = event.toImmutable();
+        String message = event.getMessage().getFormattedMessage();
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-
         message = String.format("[%s] [%s/%s] %s", formatter.format(new Date(event.getTimeMillis())), event.getThreadName(), event.getLevel().toString(), message);
         message = message.replaceAll("\\[m|\\[([0-9]{1,2}[;m]?){3}|\u001b+", "").replaceAll("\\x1b\\[[0-9;]*[A-Za-z]\\]*", "").replace("_", "\\_").replace("*", "\\*").replace("~", "\\~");;
         msgs.add(message);
