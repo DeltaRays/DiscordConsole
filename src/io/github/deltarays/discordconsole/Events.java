@@ -10,8 +10,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Events implements Listener {
-    Main main;
-    public Events(Main main){
+    DiscordConsole main;
+    public Events(DiscordConsole main){
         super();
         this.main = main;
     }

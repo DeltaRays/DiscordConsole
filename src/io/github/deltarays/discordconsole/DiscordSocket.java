@@ -11,16 +11,18 @@ public class DiscordSocket extends WebSocketClient {
     String lastS;
     Boolean isInvalid = false;
     String botId = "";
-    Main main;
+    DiscordConsole main;
     String sessionId = "";
     Boolean resume;
-    public DiscordSocket(URI serverUri, Main main, String sessionId) {
+    Boolean ackReceived = true;
+    Timer timer;
+    public DiscordSocket(URI serverUri, DiscordConsole main, String sessionId) {
         super(serverUri);
         this.main = main;
         this.sessionId = sessionId;
         this.resume = true;
     }
-    public DiscordSocket(URI serverUri, Main main) {
+    public DiscordSocket(URI serverUri, DiscordConsole main) {
         super(serverUri);
         this.main = main;
         this.resume = false;
@@ -57,34 +59,43 @@ public class DiscordSocket extends WebSocketClient {
             Integer hb_i = Math.toIntExact(Math.round(heartbeat_interval));
             main.getLogger().info("Connecting to the discord bot");
             if(!resume) {
-                String resp = String.format("{\"op\":2, \"d\": {\"token\":\"%s\", \"properties\": {\"$os\": \"linux\", \"$browser\": \"my_library\", \"$device\":\"my_library\"}}}", main.getConfig().getString("BotToken"));
+                String resp = String.format("{\"op\":2, \"d\": {\"token\":\"%s\", \"properties\": {\"$os\": \"linux\", \"$browser\": \"DiscordSocket\", \"$device\":\"DiscordSocket\",\"$referrer\":\"\",\"$referring_domain\":\"\"},\"compress\":false}}", main.getConfig().getString("BotToken"));
                 send(resp);
             } else {
-                String resp = String.format("{\"op\":6,\"d\":{\"token\":\"%s\",\"session_id\":\"%s\",\"seq\": %s}}", main.getConfig().getString("BotToken"), sessionId, lastS);
+                String resp = String.format("{\"op\":6,\"d\":{\"token\":\"%s\",\"session_id\":%s,\"seq\":%s}}", main.getConfig().getString("BotToken"), sessionId, lastS);
                 send(resp);
             }
-            Timer timer = new Timer();
+            timer = new Timer();
             timer.scheduleAtFixedRate(new TimerTask() {
 
                 @Override
                 public void run() {
                     try {
-                        if(isInvalid) {
+                        if(!ackReceived){
+                            if(main.getConfig().getBoolean("Debug")) {
+                                main.getLogger().info("[Discord WebSocket] Hearbeat ack not received! Terminating the connection and reconnecting!");
+                                main.socketConnect(lastS);
+                                close(1002);
+                                timer.cancel();
+                                timer.purge();
+                            }
+                        } else if(isInvalid) {
                             timer.cancel();
                             timer.purge();
-                        } else {
+                        }else {
                             if(main.getConfig().getBoolean("Debug")) {
                                 main.getLogger().info("[Discord WebSocket] Heartbeat sent");
                             }
                             String s = String.format("{\"op\": 1, \"d\": %s}", lastS);
                             send(s);
+                            ackReceived = false;
 
                         }
                     } catch(Exception e){
                         timer.cancel();
                         timer.purge();
                         if(main.getConfig().getBoolean("Debug")){
-                            main.getLogger().severe("[WebSocket] Error in sending heartbeat!\n"+ e.toString());
+                            main.getLogger().severe("[Discord WebSocket] Error in sending heartbeat!\n"+ e.toString());
                         }
                     }
                 }
@@ -109,13 +120,15 @@ public class DiscordSocket extends WebSocketClient {
                     }
                 }
             }
+        } else if(op == 11){
+            ackReceived = true;
         }
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
         if(main.getConfig().getBoolean("Debug")) {
-            main.getLogger().info(String.format("WebSocket closed! Code: %s Reason: %s", code, reason));
+            main.getLogger().info(String.format("[Discord WebSocket] Closed! Code: %s Reason: %s", code, reason));
         }
         if(code == 4004){
             isInvalid = true;
@@ -132,8 +145,19 @@ public class DiscordSocket extends WebSocketClient {
             } catch (Exception e) {
                 main.getLogger().severe("[Discord WebSocket] Failure to reconnect!\n" + e.toString());
             }
-        } else {
+        } else if(code != 1002){
             main.getLogger().severe(String.format("[Discord WebSocket] WebSocket closed!\nCode: %s\nReason: %s", code, reason));
+
+            try {
+
+                main.socketConnect(sessionId);
+            } catch (Exception e) {
+                main.getLogger().severe("[Discord WebSocket] Failure to reconnect!\n" + e.toString());
+            }
+        } else {
+            if(main.getConfig().getBoolean("Debug")) main.getLogger().info("[Discord WebSocket] Closing...");
+            timer.cancel();
+            timer.purge();
         }
 
     }

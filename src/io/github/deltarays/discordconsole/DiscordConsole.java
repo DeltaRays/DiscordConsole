@@ -9,9 +9,10 @@ import org.json.simple.JSONObject;
 import java.io.*;
 import java.net.*;
 
-public class Main extends JavaPlugin {
+public class DiscordConsole extends JavaPlugin {
     private static final Logger logger = (Logger) LogManager.getRootLogger();
     Boolean firstLoad = false;
+    DiscordSocket socket;
     @Override
     public void onLoad() {
         if(!getDataFolder().exists()){
@@ -44,6 +45,10 @@ public class Main extends JavaPlugin {
         try {
             Bukkit.getConsoleSender().sendMessage("DiscordConsole has been enabled!");
             getServer().getPluginManager().registerEvents(new Events(this), this);
+            if(!socket.isOpen()){
+                socketConnect();
+                if(getConfig().getBoolean("Debug")) getLogger().info("[Discord Websocket] Restarted the socket after a reload!");
+            }
         } catch (Exception e)  {
             if(getConfig().getBoolean("Debug")) {
                 getLogger().severe(e.toString());
@@ -51,11 +56,19 @@ public class Main extends JavaPlugin {
         }
     }
     public void socketConnect() throws Exception {
-        DiscordSocket socket = new DiscordSocket(URI.create(getDiscordWSUrl()), this);
+        socket = new DiscordSocket(URI.create(getDiscordWSUrl()), this);
         socket.connect();
 
     }
     public void socketConnect(String sessionId) throws Exception {
+        if(!socket.equals(null)){
+            socket.close(1002, "Reconnecting to the socket!");
+            if(!socket.timer.equals(null)){
+                socket.timer.cancel();
+                socket.timer.purge();
+                if(getConfig().getBoolean("Debug")) getLogger().info("[Discord WebSocket] Stopping the old heartbeat before connecting to the socket again!");
+            }
+        }
         DiscordSocket socket = new DiscordSocket(URI.create(getDiscordWSUrl()), this, sessionId);
         socket.connect();
 
@@ -78,6 +91,9 @@ public class Main extends JavaPlugin {
             out.flush();
             out.close();
             Integer responsecode = con.getResponseCode();
+            socket.timer.purge();
+            socket.timer.cancel();
+            socket.close(1002, "DiscordConsole has been disabled!");
         } catch(Exception e){
             if(getConfig().getBoolean("Debug")){
                 getLogger().severe(e.toString());

@@ -1,8 +1,6 @@
 package io.github.deltarays.discordconsole;
 import org.apache.commons.lang.StringUtils;
-import org.apache.logging.log4j.message.Message;
 import org.bukkit.Bukkit;
-import org.bukkit.event.Listener;
 import org.json.simple.JSONObject;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
@@ -13,10 +11,10 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class LogAppender extends AbstractAppender  {
-    Main main;
+    DiscordConsole main;
     Boolean isInvalid = false;
     Queue<String> msgs = new LinkedList<String>();
-    public LogAppender(Main main) {
+    public LogAppender(DiscordConsole main) {
         super("DiscordConsoleLogAppender", null, null);
         start();
         this.main = main;

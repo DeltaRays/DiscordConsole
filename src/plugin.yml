@@ -1,4 +1,4 @@
-main: io.github.deltarays.discordconsole.Main
+main: io.github.deltarays.discordconsole.DiscordConsole
 name: DiscordConsole
 version: 1.0.1
 author: DeltaRays
