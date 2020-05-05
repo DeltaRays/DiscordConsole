@@ -16,14 +16,20 @@ public class DiscordSocket extends WebSocketClient {
     Boolean resume;
     Boolean ackReceived = true;
     Timer timer;
+    private Boolean isOpening;
+    public Boolean isOpening(){
+        return isOpening;
+    }
     public DiscordSocket(URI serverUri, DiscordConsole main, String sessionId) {
         super(serverUri);
+        this.isOpening = true;
         this.main = main;
         this.sessionId = sessionId;
         this.resume = true;
     }
     public DiscordSocket(URI serverUri, DiscordConsole main) {
         super(serverUri);
+        this.isOpening = true;
         this.main = main;
         this.resume = false;
     }
@@ -33,12 +39,13 @@ public class DiscordSocket extends WebSocketClient {
         if(main.getConfig().getBoolean("Debug")) {
         main.getLogger().info("[WebSocket] Socket opened!");
         }
+        isOpening = false;
         //System.out.println("Connected to the WebSocket!");
     }
 
     @Override
     public void onMessage(String msg) {
-        Double op = Double.valueOf(msg.replaceAll(".*\"op\":(.+?)(,|\\{).*", "$1"));
+        double op = Double.valueOf(msg.replaceAll(".*\"op\":(.+?)(,|\\{).*", "$1"));
         String s = msg.replaceAll(".*\"s\":(.+?)(,|\\{).*", "$1");
         if(s != "null"){
             lastS = s;
@@ -55,8 +62,8 @@ public class DiscordSocket extends WebSocketClient {
             if(!resume) sessionId = msg.replaceAll(".*\"session_id\":(.+?)(,|\\{).*", "$1");
             botId =  msg.replaceFirst(".*\"user\":\\{.*\"id\":\"(.+?)\"(,|\\{).*", "$1");
         } else if(op== 10){
-            Double heartbeat_interval = Double.valueOf(msg.replaceAll(".*\"heartbeat_interval\":(.+?)(,|\\{).*", "$1"));
-            Integer hb_i = Math.toIntExact(Math.round(heartbeat_interval));
+            double heartbeat_interval = Double.valueOf(msg.replaceAll(".*\"heartbeat_interval\":(.+?)(,|\\{).*", "$1"));
+            int hb_i = Math.toIntExact(Math.round(heartbeat_interval));
             main.getLogger().info("Connecting to the discord bot");
             if(!resume) {
                 String resp = String.format("{\"op\":2, \"d\": {\"token\":\"%s\", \"properties\": {\"$os\": \"linux\", \"$browser\": \"DiscordSocket\", \"$device\":\"DiscordSocket\",\"$referrer\":\"\",\"$referring_domain\":\"\"},\"compress\":false}}", main.getConfig().getString("BotToken"));
@@ -94,9 +101,7 @@ public class DiscordSocket extends WebSocketClient {
                     } catch(Exception e){
                         timer.cancel();
                         timer.purge();
-                        if(main.getConfig().getBoolean("Debug")){
-                            main.getLogger().severe("[Discord WebSocket] Error in sending heartbeat!\n"+ e.toString());
-                        }
+                        main.getLogger().severe("[Discord WebSocket] Error in sending heartbeat!\n"+ e.toString());
                     }
                 }
             },hb_i -1,hb_i);
@@ -115,7 +120,7 @@ public class DiscordSocket extends WebSocketClient {
                                 }
                             });
                         } catch(Exception e){
-                            main.getLogger().severe(e.toString());
+                            main.getLogger().severe("[Discord WebSocket] Error in running command from console!\n"+ e.toString());
                         }
                     }
                 }
@@ -133,7 +138,6 @@ public class DiscordSocket extends WebSocketClient {
         if(code == 4004){
             isInvalid = true;
             main.getLogger().severe("An invalid discord bot token was provided!");
-            return;
         } else if(code == 1001 || code == 1006){
             String token = main.getConfig().getString("BotToken");
             if(!token.matches("^(?i)[a-z0-9.\\-_]{32,100}$")){
@@ -155,7 +159,6 @@ public class DiscordSocket extends WebSocketClient {
                 main.getLogger().severe("[Discord WebSocket] Failure to reconnect!\n" + e.toString());
             }
         } else {
-            if(main.getConfig().getBoolean("Debug")) main.getLogger().info("[Discord WebSocket] Closing...");
             timer.cancel();
             timer.purge();
         }

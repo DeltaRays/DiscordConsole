@@ -1,11 +1,16 @@
 package io.github.deltarays.discordconsole;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URL;
+import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -17,8 +22,8 @@ public class Events implements Listener {
     }
     @EventHandler
     public void onJoin(PlayerJoinEvent e){
+        Player p = e.getPlayer();
         if(main.firstLoad) {
-            Player p = e.getPlayer();
             if (p.isOp()) {
                 Timer timer = new Timer();
                 timer.schedule(new TimerTask() {
@@ -29,5 +34,16 @@ public class Events implements Listener {
                 }, 2000);
             }
         }
+        if(p.isOp()){
+            Bukkit.getScheduler().runTaskAsynchronously(main, () -> {
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&f[&bDiscordConsole&f] A new DiscordConsole version was found! Download it at &bhttps://www.spigotmc.org/resources/discordconsole.77503&f."));
+                        }
+                }, 3000);
+            });
+        };
     }
 }
