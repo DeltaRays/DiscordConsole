@@ -1,9 +1,11 @@
 package io.github.deltarays.discordconsole;
+
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.json.simple.JSONObject;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
+
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,11 +14,12 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class LogAppender extends AbstractAppender  {
+public class LogAppender extends AbstractAppender {
     DiscordConsole main;
     Boolean isInvalid = false;
     Boolean startupDone = false;
     Queue<String> msgs = new LinkedList<String>();
+
     public LogAppender(DiscordConsole main) {
         super("DiscordConsoleLogAppender", null, null);
         start();
@@ -44,9 +47,9 @@ public class LogAppender extends AbstractAppender  {
                             out.flush();
                             out.close();
                             Integer responsecode = con.getResponseCode();
-                            if(responsecode == 404){
+                            if (responsecode == 404) {
                                 Bukkit.getScheduler().runTask(main, () -> {
-                                    if(!isInvalid){
+                                    if (!isInvalid) {
                                         main.getLogger().severe("An incorrect channel id was provided!");
                                     }
                                     isInvalid = true;
@@ -57,35 +60,39 @@ public class LogAppender extends AbstractAppender  {
                         }
                         message.append(ln).append("\n");
                     }
-                    if(StringUtils.isNotBlank(message.toString().replace("\n", ""))){
+                    if (StringUtils.isNotBlank(message.toString().replace("\n", ""))) {
                         HttpURLConnection con = main.sendDiscordMessage(message.toString());
                         int responseCode = con.getResponseCode();
-                        if(responseCode == 404){
+                        if (responseCode == 404) {
                             Bukkit.getScheduler().runTask(main, () -> {
-                                if(!isInvalid){
+                                if (!isInvalid) {
                                     main.getLogger().severe("An incorrect channel id was provided!");
                                 }
                                 isInvalid = true;
                             });
                         }
-                    };
-                } catch(Exception e){
-                    main.getLogger().severe("Error in sending console logs to channel!\n" +e.toString());
+                    }
+                    ;
+                } catch (Exception e) {
+                    main.getLogger().severe("Error in sending console logs to channel!\n" + e.toString());
                 }
             }
         }, 0, (main.getConfig().getInt("ChannelRefreshRate") >= 1 ? main.getConfig().getInt("ChannelRefreshRate") : 2) * 1000);
     }
+
     @Override
     public void append(LogEvent ev) {
         Method m = null;
         try {
             m = LogEvent.class.getMethod("toImmutable");
 
-        } catch (NoSuchMethodException e) {}
-        if(m != null){
+        } catch (NoSuchMethodException e) {
+        }
+        if (m != null) {
             try {
                 ev = (LogEvent) m.invoke(ev);
-            } catch (IllegalAccessException | InvocationTargetException e) {}
+            } catch (IllegalAccessException | InvocationTargetException e) {
+            }
         }
         Long timeMillis = null;
         m = null;
@@ -94,18 +101,20 @@ public class LogAppender extends AbstractAppender  {
         } catch (NoSuchMethodException e) {
             try {
                 timeMillis = (Long) LogEvent.class.getMethod("getMillis").invoke(ev);
-            } catch (Exception ee){}
+            } catch (Exception ee) {
+            }
         }
-        if(m != null){
+        if (m != null) {
             try {
                 timeMillis = (Long) m.invoke(ev);
-            } catch (IllegalAccessException | InvocationTargetException e) {}
+            } catch (IllegalAccessException | InvocationTargetException e) {
+            }
         }
         final LogEvent event = ev;
         String message = event.getMessage().getFormattedMessage();
         Boolean sendStartupMessages = !main.getConfig().isSet("sendStartupMessages") || main.getConfig().getBoolean("sendStartupMessages");
-        if(message.toLowerCase().contains("reload") && message.toLowerCase().contains("complete")) startupDone = true;
-        if(startupDone  || sendStartupMessages) {
+        if (message.toLowerCase().contains("reload") && message.toLowerCase().contains("complete")) startupDone = true;
+        if (startupDone || sendStartupMessages) {
             SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
             message = String.format("[%s] [%s/%s] %s", formatter.format(new Date(timeMillis)), event.getThreadName(), event.getLevel().toString(), message);
             message = message.replaceAll("\\[m|\\[([0-9]{1,2}[;m]?){3}|\u001b+", "").replaceAll("\\x1b\\[[0-9;]*[A-Za-z]\\]*", "").replace("_", "\\_").replace("*", "\\*").replace("~", "\\~").replaceAll("(&|§)[0-9a-fklmnor]", "");

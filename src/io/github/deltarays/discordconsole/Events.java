@@ -16,14 +16,16 @@ import java.util.TimerTask;
 
 public class Events implements Listener {
     DiscordConsole main;
-    public Events(DiscordConsole main){
+
+    public Events(DiscordConsole main) {
         super();
         this.main = main;
     }
+
     @EventHandler
-    public void onJoin(PlayerJoinEvent e){
+    public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        if(main.firstLoad) {
+        if (main.firstLoad) {
             if (p.isOp()) {
                 Timer timer = new Timer();
                 timer.schedule(new TimerTask() {
@@ -34,16 +36,17 @@ public class Events implements Listener {
                 }, 2000);
             }
         }
-        if(p.isOp()){
+        if (p.isOp()) {
             Bukkit.getScheduler().runTaskAsynchronously(main, () -> {
                 Timer timer = new Timer();
                 timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&f[&bDiscordConsole&f] A new DiscordConsole version was found! Download it at &bhttps://www.spigotmc.org/resources/discordconsole.77503&f."));
-                        }
+                    @Override
+                    public void run() {
+                        p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&f[&bDiscordConsole&f] A new DiscordConsole version was found! Download it at &bhttps://www.spigotmc.org/resources/discordconsole.77503&f."));
+                    }
                 }, 3000);
             });
-        };
+        }
+        ;
     }
 }
