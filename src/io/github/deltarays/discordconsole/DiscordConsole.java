@@ -83,12 +83,10 @@ public class DiscordConsole extends JavaPlugin {
         try {
             if (socket != null) {
                 socket.close(1002, "Reconnecting to the socket!");
-                if (socket.timer != null) {
-                    socket.timer.cancel();
-                    socket.timer.purge();
-                    if (getConfig().getBoolean("Debug"))
-                        getLogger().info("[Discord WebSocket] Stopping the old heartbeat before connecting to the socket again!");
-                }
+                socket.timer.cancel();
+                socket.timer.purge();
+                if (getConfig().getBoolean("Debug"))
+                    getLogger().info("[Discord WebSocket] Stopping the old heartbeat before connecting to the socket again!");
             }
             socket = new DiscordSocket(URI.create(getDiscordWSUrl()), this);
             socket.connect();
@@ -101,12 +99,10 @@ public class DiscordConsole extends JavaPlugin {
         try {
             if (socket != null) {
                 socket.close(1002, "Reconnecting to the socket!");
-                if (socket.timer != null) {
-                    socket.timer.cancel();
-                    socket.timer.purge();
-                    if (getConfig().getBoolean("Debug"))
-                        getLogger().info("[Discord WebSocket] Stopping the old heartbeat before connecting to the socket again!");
-                }
+                socket.timer.cancel();
+                socket.timer.purge();
+                if (getConfig().getBoolean("Debug"))
+                    getLogger().info("[Discord WebSocket] Stopping the old heartbeat before connecting to the socket again!");
             }
             DiscordSocket socket = new DiscordSocket(URI.create(getDiscordWSUrl()), this, sessionId);
             socket.connect();
@@ -198,11 +194,11 @@ public class DiscordConsole extends JavaPlugin {
         try {
             InputStream inputStream = new URL("https://api.spigotmc.org/legacy/update.php?resource=77503").openStream();
             Scanner scanner = new Scanner(inputStream);
-            String version = getDescription().getVersion();
-            if (scanner.hasNext()) {
-                version = scanner.next();
+            StringBuilder version = new StringBuilder();
+            while (scanner.hasNext()) {
+                version.append(scanner.next());
             }
-            if (!version.equals(getDescription().getVersion())) {
+            if (!version.toString().equals(getDescription().getVersion())) {
                 return true;
             }
         } catch (Exception ee) {
