@@ -4,8 +4,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -19,10 +24,7 @@ public class DiscordSocket extends WebSocketClient {
     Boolean ackReceived = true;
     Timer timer;
     private Boolean isOpening;
-
-    public Boolean isOpening() {
-        return isOpening;
-    }
+    private Boolean isConnected = false;
 
     public DiscordSocket(URI serverUri, DiscordConsole main, String sessionId) {
         super(serverUri);
@@ -39,44 +41,76 @@ public class DiscordSocket extends WebSocketClient {
         this.resume = false;
     }
 
+    public Boolean isOpening() {
+        return isOpening;
+    }
+
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        if (main.getConfig().getBoolean("Debug")) {
+        if (main.getConfig().getBoolean("debug")) {
             main.getLogger().info("[WebSocket] Socket opened!");
         }
         isOpening = false;
-        //System.out.println("Connected to the WebSocket!");
     }
 
     @Override
     public void onMessage(String msg) {
-        double op = Double.valueOf(msg.replaceAll(".*\"op\":(.+?)(,|\\{).*", "$1"));
-        String s = msg.replaceAll(".*\"s\":(.+?)(,|\\{).*", "$1");
-        if (s != "null") {
+        JSONParser parser = new JSONParser();
+        JSONObject parsed = new JSONObject();
+        try {
+            parsed = (JSONObject) parser.parse(msg);
+        } catch (ParseException e) {
+            main.getLogger().severe("[Discord WebSocket] Error encountered in parsing json payload");
+            e.printStackTrace();
+        }
+        long op = (long) parsed.get("op");
+        String s = String.valueOf(parsed.get("s"));
+        if (s != null) {
             lastS = s;
         }
-        if (!main.getConfig().getString("BotToken").matches("^(?i)[a-z0-9.\\-_]{32,100}$")) {
+        if (!main.getConfig().getString("botToken").matches("^(?i)[a-z0-9.\\-_]{32,100}$")) {
             isInvalid = true;
-            Bukkit.getScheduler().runTask(main, () -> {
-                main.getLogger().severe(ChatColor.DARK_RED + "An invalid bot token was provided! Go to the plugins folder, DiscordConsole, config.yml to modify the bot token");
-            });
+            Bukkit.getScheduler().runTask(main, () -> main.getLogger().severe(ChatColor.DARK_RED + "An invalid bot token was provided! Go to the plugins folder, DiscordConsole, config.yml to modify the bot token"));
         }
-        String t = msg.replaceAll(".*\"t\":(.+?)(,|\\{).*", "$1");
-        if (t.contains("READY")) {
-            main.getLogger().info("Successfully connected to the bot!");
-            if (!resume) sessionId = msg.replaceAll(".*\"session_id\":(.+?)(,|\\{).*", "$1");
-            botId = msg.replaceFirst(".*\"user\":\\{.*\"id\":\"(.+?)\"(,|\\{).*", "$1");
-        } else if (op == 10) {
-            double heartbeat_interval = Double.valueOf(msg.replaceAll(".*\"heartbeat_interval\":(.+?)(,|\\{).*", "$1"));
+        if (op == 10) {
+            JSONObject d = (JSONObject) parsed.get("d");
+            long heartbeat_interval = (long) d.get("heartbeat_interval");
             int hb_i = Math.toIntExact(Math.round(heartbeat_interval));
-            main.getLogger().info("Connecting to the discord bot");
+            Bukkit.getServer().getConsoleSender().sendMessage(ConRef.getPlPrefix() + " §eConnecting to the discord bot...");
+            JSONObject response;
             if (!resume) {
-                String resp = String.format("{\"op\":2, \"d\": {\"token\":\"%s\", \"properties\": {\"$os\": \"linux\", \"$browser\": \"DiscordSocket\", \"$device\":\"DiscordSocket\",\"$referrer\":\"\",\"$referring_domain\":\"\"},\"compress\":false}}", main.getConfig().getString("BotToken"));
-                send(resp);
+                String botStatus = main.getConfig().getString("botStatus");
+                ArrayList<String> statuses = new ArrayList<>();
+                statuses.addAll(Arrays.asList("online", "dnd", "invisible", "idle"));
+                if (!statuses.contains(botStatus)) botStatus = "online";
+                JSONObject game = new JSONObject();
+                game.put("name", ConRef.replaceExpressions(main.getConfig().getString("botStatusText"), true));
+                game.put("type", 0);
+                JSONObject presResp = new JSONObject();
+                if (!main.getConfig().getString("botStatusText").isEmpty()) presResp.put("game", game);
+                presResp.put("status", botStatus);
+                JSONObject dProps = new JSONObject();
+                dProps.put("$os", "linux");
+                dProps.put("$browser", "DiscordSocket");
+                dProps.put("$device", "DiscordConsole");
+
+                JSONObject dResp = new JSONObject();
+                dResp.put("token", main.getConfig().getString("botToken"));
+                dResp.put("properties", dProps);
+                dResp.put("presence", presResp);
+                response = new JSONObject();
+                response.put("op", 2);
+                response.put("d", dResp);
             } else {
-                String resp = String.format("{\"op\":6,\"d\":{\"token\":\"%s\",\"session_id\":%s,\"seq\":%s}}", main.getConfig().getString("BotToken"), sessionId, lastS);
-                send(resp);
+                JSONObject dResp = new JSONObject();
+                dResp.put("token", main.getConfig().getString("botToken"));
+                dResp.put("session_id", sessionId);
+                dResp.put("seq", lastS);
+                response = new JSONObject();
+                response.put("op", 6);
+                response.put("d", dResp);
             }
+            send(response.toJSONString());
             timer = new Timer();
             timer.scheduleAtFixedRate(new TimerTask() {
 
@@ -84,67 +118,102 @@ public class DiscordSocket extends WebSocketClient {
                 public void run() {
                     try {
                         if (!ackReceived) {
-                            if (main.getConfig().getBoolean("Debug")) {
+                            if (main.getConfig().getBoolean("debug")) {
                                 main.getLogger().info("[Discord WebSocket] Hearbeat ack not received! Terminating the connection and reconnecting!");
                                 main.socketConnect(lastS);
                                 close(1002);
                                 timer.cancel();
-                                timer.purge();
+                                if (timer != null) timer.purge();
                             }
-                        } else if (isInvalid) {
+                        } else if (isInvalid || isClosed() || isClosing()) {
                             timer.cancel();
                             timer.purge();
                         } else {
-                            if (main.getConfig().getBoolean("Debug")) {
-                                main.getLogger().info("[Discord WebSocket] Heartbeat sent");
+                            if (main.getConfig().isSet("debug")) {
+                                if (main.getConfig().getBoolean("debug"))
+                                    main.getLogger().info("[Discord WebSocket] Heartbeat sent");
                             }
-                            String s = String.format("{\"op\": 1, \"d\": %s}", lastS);
+                            String s = String.format("{\"op\": 1, \"d\": %s}", lastS != null ? lastS : "null");
                             send(s);
                             ackReceived = false;
-
                         }
                     } catch (Exception e) {
-                        timer.cancel();
-                        timer.purge();
-                        main.getLogger().severe("[Discord WebSocket] Error in sending heartbeat!\n" + e.toString());
+                        main.getLogger().severe("[Discord WebSocket] Error in sending heartbeat!");
+                        e.printStackTrace();
+                        if (timer != null) {
+                            timer.cancel();
+                            timer.purge();
+                        }
                     }
                 }
             }, hb_i - 1, hb_i);
-        } else if (t.contains("MESSAGE_CREATE")) {
-            if (main.getConfig().getBoolean("ConsoleCommandsEnabled")) {
-                String channelId = msg.replaceFirst(".*\"channel_id\":\"(.+?)\"(,|\\{).*", "$1");
-                if (channelId.equals(main.getConfig().getString("ChannelId"))) {
-                    String senderId = msg.replaceFirst(".*\"author\":\\{.*\"id\":\"(.+?)\"(,|\\{).*", "$1");
-                    if (!senderId.equals(botId)) {
-                        final String content = msg.replaceAll(".*\"content\":\"(.+?)\"(,|\\{).*", "$1").replaceAll("\\\\\"", "\"").replaceAll("\\\\\\\\", "\\\\");
-                        try {
-                            Bukkit.getScheduler().runTask(main, new Runnable() {
-                                @Override
-                                public void run() {
-                                    Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), content);
-                                }
-                            });
-                        } catch (Exception e) {
-                            main.getLogger().severe("[Discord WebSocket] Error in running command from console!\n" + e.toString());
+        } else if (op == 9) {
+            boolean d = (boolean) parsed.get("d");
+            Timer t = new Timer();
+            t.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (!d) {
+                        main.socketConnect();
+                    } else {
+                        main.socketConnect(sessionId);
+                    }
+                }
+            }, (long) (Math.random() * 4000) + 1000);
+        } else if (op == 11) {
+            ackReceived = true;
+        } else if (op == 0) {
+            String t = (String) parsed.get("t");
+            JSONObject d = (JSONObject) parsed.get("d");
+            if (t.contains("READY")) {
+                isConnected = true;
+                Bukkit.getServer().getConsoleSender().sendMessage(ConRef.getPlPrefix() + " §aSuccessfully connected to the bot!");
+                sessionId = (String) parsed.get("session_id");
+                JSONObject user = (JSONObject) d.get("user");
+                botId = (String) user.get("id");
+            } else if (t.contains("RESUME")) {
+                isConnected = true;
+                resume = false;
+            } else if (t.contains("MESSAGE_CREATE")) {
+                if (main.getConfig().getBoolean("consoleCommandsEnabled")) {
+                    String channelId = (String) d.get("channel_id");
+                    if (main.workingChannels.contains(channelId)) {
+                        JSONObject author = (JSONObject) d.get("author");
+                        String senderId = (String) author.get("id");
+                        if (!senderId.equalsIgnoreCase(botId)) {
+                            String content = ((String) d.get("content")).replaceAll("\\\\\"", "\"").replaceAll("\\\\\\\\", "\\\\");
+                            try {
+                                Bukkit.getScheduler().runTask(main, () -> Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), content));
+                            } catch (Exception e) {
+                                main.getLogger().severe("[Discord WebSocket] Error in running command from console!");
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
             }
-        } else if (op == 11) {
-            ackReceived = true;
         }
+    }
+
+    public Boolean isConnected() {
+        return isConnected;
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        if (main.getConfig().getBoolean("Debug")) {
+        isConnected = false;
+        if (timer != null) {
+            timer.cancel();
+            timer.purge();
+        }
+        if (main.getConfig().getBoolean("debug")) {
             main.getLogger().info(String.format("[Discord WebSocket] Closed! Code: %s Reason: %s", code, reason));
         }
         if (code == 4004) {
             isInvalid = true;
             main.getLogger().severe("An invalid discord bot token was provided!");
         } else if (code == 1001 || code == 1006) {
-            String token = main.getConfig().getString("BotToken");
+            String token = main.getConfig().getString("botToken");
             if (!token.matches("^(?i)[a-z0-9.\\-_]{32,100}$")) {
                 main.getLogger().severe("Invalid token provided");
             }
@@ -152,30 +221,26 @@ public class DiscordSocket extends WebSocketClient {
             try {
                 main.socketConnect(sessionId);
             } catch (Exception e) {
-                main.getLogger().severe("[Discord WebSocket] Failure to reconnect!\n" + e.toString());
+                main.getLogger().severe("[Discord WebSocket] Failure to reconnect");
+                e.printStackTrace();
             }
         } else if (code != 1002) {
             main.getLogger().severe(String.format("[Discord WebSocket] WebSocket closed!\nCode: %s\nReason: %s", code, reason));
-
             try {
 
                 main.socketConnect(sessionId);
             } catch (Exception e) {
-                main.getLogger().severe("[Discord WebSocket] Failure to reconnect!\n" + e.toString());
+                main.getLogger().severe("[Discord WebSocket] Failure to reconnect!");
+                e.printStackTrace();
             }
-        } else {
-            timer.cancel();
-            timer.purge();
         }
 
     }
 
     @Override
     public void onError(Exception e) {
-        if (main.getConfig().getBoolean("Debug")) {
-            main.getLogger().severe(String.format("WebSocket error!\n%s", e.toString()));
-        } else if (isInvalid) {
-            main.getLogger().severe(e.toString());
-        }
+        isConnected = false;
+        main.getLogger().severe("[Discord Websocket] Error encountered!");
+        e.printStackTrace();
     }
 }

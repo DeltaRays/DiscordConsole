@@ -1,6 +1,11 @@
-BotToken: "TOKEN"
-ChannelId: "000000000000000000"
-ChannelRefreshRate: 1
-ConsoleCommandsEnabled: true
+botToken: "TOKEN"
+channelIds:
+  - "000000000000000000"
+channelRefreshRate: 1
+consoleCommandsEnabled: true
 sendStartupMessages: true
-Debug: false
+checkForUpdates: true
+botStatus: 'online'
+botStatusText: "on a Minecraft server with %player_count% players"
+debug: false
+prefix: '&7[&6DiscordConsole&7]'
