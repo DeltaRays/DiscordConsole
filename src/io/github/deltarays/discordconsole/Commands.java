@@ -65,18 +65,18 @@ public class Commands implements TabExecutor, Listener {
                                 JSONArray releases = (JSONArray) jsonParser.parse(response.toString());
                                 JSONObject latestRelease = (JSONObject) releases.get(0);
                                 ArrayList<String> versions = new ArrayList<>();
-                                releases.forEach((Object t) -> {
+                                for (Object t : releases.toArray()) {
                                     JSONObject release = (JSONObject) t;
                                     versions.add((String) release.get("tag_name"));
-                                });
+                                }
                                 if (!versions.contains(main.getDescription().getVersion())) {
                                     sender.sendMessage("§cApparently you have a plugin version that doesn't exist in the releases list. Either you're in an experimental build or something is wrong. If you're not in an experimental build then you should download the latest release here: §b§n" + "https://www.spigotmc.org/resources/discordconsole.77503/");
                                 } else {
                                     sender.sendMessage(String.format("§7You're §6%s §7version(s) behind! (Latest version: §6%s§7) §7Download it here: §6%s", versions.indexOf(main.getDescription().getVersion()), latestRelease.get("tag_name"), "https://www.spigotmc.org/resources/discordconsole.77503/"));
                                 }
-                            } catch (Exception exc) {
+                            } catch (Exception exception) {
                                 main.getLogger().warning("Error encountered while checking for versions!");
-                                exc.printStackTrace();
+                                exception.printStackTrace();
                             }
                         }
                     } else {

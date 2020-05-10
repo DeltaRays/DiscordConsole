@@ -49,11 +49,11 @@ public class Events implements Listener {
                 JSONArray releases = (JSONArray) jsonParser.parse(response.toString());
                 JSONObject latestRelease = (JSONObject) releases.get(0);
                 ArrayList<String> versions = new ArrayList<>();
-                releases.forEach((Object t) -> {
+                for (Object t : releases.toArray()) {
                     JSONObject release = (JSONObject) t;
                     versions.add((String) release.get("tag_name"));
-                });
-                if (versions.contains(main.getDescription().getVersion()) && (!main.getConfig().isSet("checkForUpdates") || main.getConfig().getBoolean("checkForUpdates"))) {
+                }
+                if ((!main.getConfig().isSet("checkForUpdates") || main.getConfig().getBoolean("checkForUpdates")) && !latestRelease.get("tag_name").toString().equalsIgnoreCase(main.getDescription().getVersion())) {
                     player.sendMessage(String.format("§7You're §6%s §7version(s) behind! (Latest version: §6%s§7) §7Download it here: §6%s", versions.indexOf(main.getDescription().getVersion()), latestRelease.get("tag_name"), "https://www.spigotmc.org/resources/discordconsole.77503/"));
                 }
             } catch (Exception exc) {

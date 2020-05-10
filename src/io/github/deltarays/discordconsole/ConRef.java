@@ -1,8 +1,10 @@
 package io.github.deltarays.discordconsole;
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
 
@@ -24,10 +26,7 @@ public class ConRef { //Config Refiner
                 Player player = (Player) p;
                 if (!isVanished(player)) unvanishedPlayers++;
             }
-        } else {
-            unvanishedPlayers = Bukkit.getServer().getOnlinePlayers().size();
-        }
-        if (Lag.canGet) text = text.replaceAll("%tps%", String.valueOf(Math.round(Lag.getTPS() * 100) / 100));
+        } else unvanishedPlayers = Bukkit.getServer().getOnlinePlayers().size();
         text = text.replaceAll("%player_count%", String.valueOf(unvanishedPlayers));
         text = text.replaceAll("%player_max%", String.valueOf(Bukkit.getServer().getMaxPlayers()));
         text = text.replaceAll("%date%", new Date().toString());
@@ -42,6 +41,8 @@ public class ConRef { //Config Refiner
         text = text.replaceAll("%max_memory%", String.valueOf(Runtime.getRuntime().maxMemory()));
         text = text.replaceAll("%used_memory_gb%", String.valueOf(Math.round((Runtime.getRuntime().maxMemory() - Runtime.getRuntime().freeMemory()) / 102.4) / 10));
         text = text.replaceAll("%max_memory_gb%", String.valueOf(Math.round(Runtime.getRuntime().maxMemory() / 102.4) / 10));
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)
+            text = PlaceholderAPI.setPlaceholders(null, text);
         return text;
     }
 

@@ -46,36 +46,36 @@ public class LogAppender extends AbstractAppender {
 
     @Override
     public void append(LogEvent ev) {
-        Method m = null;
+        Method method = null;
         try {
-            m = LogEvent.class.getMethod("toImmutable");
+            method = LogEvent.class.getMethod("toImmutable");
 
         } catch (NoSuchMethodException ignored) {
         }
-        if (m != null) {
+        if (method != null) {
             try {
-                ev = (LogEvent) m.invoke(ev);
+                ev = (LogEvent) method.invoke(ev);
             } catch (IllegalAccessException | InvocationTargetException ignored) {
             }
         }
         Long timeMillis = null;
-        m = null;
+        method = null;
         try {
-            m = LogEvent.class.getMethod("getTimeMillis");
+            method = LogEvent.class.getMethod("getTimeMillis");
         } catch (NoSuchMethodException e) {
             try {
                 timeMillis = (Long) LogEvent.class.getMethod("getMillis").invoke(ev);
             } catch (Exception ignored) {
             }
         }
-        if (m != null) {
+        if (method != null) {
             try {
-                timeMillis = (Long) m.invoke(ev);
+                timeMillis = (Long) method.invoke(ev);
             } catch (IllegalAccessException | InvocationTargetException ignored) {
             }
         }
         if (timeMillis == null) timeMillis = new Date().getTime();
-        final LogEvent event = ev;
+        LogEvent event = ev;
         String message = event.getMessage().getFormattedMessage();
         boolean sendStartupMessages = !main.getConfig().isSet("sendStartupMessages") || main.getConfig().getBoolean("sendStartupMessages");
         if (message.toLowerCase().contains("reload") && message.toLowerCase().contains("complete")) startupDone = true;

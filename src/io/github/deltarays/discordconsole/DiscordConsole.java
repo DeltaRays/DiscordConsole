@@ -78,7 +78,9 @@ public class DiscordConsole extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
-            Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Lag(), 100L, 1L);
+            if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+                Bukkit.getConsoleSender().sendMessage(ConRef.getPlPrefix() + " §aPlaceholderAPI placeholders loaded!");
+            }
             Bukkit.getServer().getConsoleSender().sendMessage(ConRef.getPlPrefix() + " §aDiscordConsole has been enabled!");
             getServer().getPluginManager().registerEvents(new Events(this), this);
             getCommand(commands.maincmd).setExecutor(commands);
@@ -107,15 +109,19 @@ public class DiscordConsole extends JavaPlugin {
                 JSONArray releases = (JSONArray) jsonParser.parse(response.toString());
                 JSONObject latestRelease = (JSONObject) releases.get(0);
                 ArrayList<String> versions = new ArrayList<>();
-                releases.forEach((Object t) -> {
+                for (Object t : releases.toArray()) {
                     JSONObject release = (JSONObject) t;
                     if (!((boolean) release.get("draft") || (boolean) release.get("prerelease")))
                         versions.add((String) release.get("tag_name"));
-                });
+                }
                 if (!versions.contains(getDescription().getVersion())) {
                     getLogger().warning("Apparently you have a plugin version that doesn't exist in the releases list. Either you're in an experimental build or something is wrong. If you're not in an experimental build then you should download the latest release here: " + "https://www.spigotmc.org/resources/discordconsole.77503/");
                 } else if (!getConfig().isSet("checkForUpdates") || getConfig().getBoolean("checkForUpdates")) {
-                    Bukkit.getServer().getConsoleSender().sendMessage(String.format(ConRef.getPlPrefix() + " §7You're §6%s §7versions behind! (Latest version: §6%s§7) Download it here: §6%s", versions.indexOf(getDescription().getVersion()), latestRelease.get("tag_name"), "https://www.spigotmc.org/resources/discordconsole.77503/"));
+                    if (!latestRelease.get("tag_name").toString().equalsIgnoreCase(getDescription().getVersion())) {
+                        Bukkit.getServer().getConsoleSender().sendMessage(String.format(ConRef.getPlPrefix() + " §7You're §6%s §7versions behind! (Latest version: §6%s§7) Download it here: §6%s", versions.indexOf(getDescription().getVersion()), latestRelease.get("tag_name"), "https://www.spigotmc.org/resources/discordconsole.77503/"));
+                    } else {
+                        Bukkit.getConsoleSender().sendMessage(ConRef.getPlPrefix() + " §7You're using the latest DiscordConsole version!");
+                    }
                 }
             } catch (Exception e) {
                 getLogger().warning("Error encountered while checking for version!");
@@ -173,8 +179,8 @@ public class DiscordConsole extends JavaPlugin {
                 }
                 socket = new DiscordSocket(URI.create(getDiscordWSUrl()), this, sessionId);
                 socket.connect();
-                Timer t = new Timer();
-                t.schedule(new TimerTask() {
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         if (!socket.isConnected() && socket.isOpen() && !socket.isInvalid) {
@@ -221,15 +227,13 @@ public class DiscordConsole extends JavaPlugin {
             }
             saveDefaultConfig();
         }
-        if (getConfig().isSet("channelId")) {
+        if (getConfig().isSet("channelId") && !getConfig().isSet("channelIds")) {
             getConfig().set("channelIds", new String[]{getConfig().getString("channelId")});
             getConfig().set("channelId", null);
         }
         if (getConfig().getString("botStatus").isEmpty()) {
             getConfig().set("botStatus", "online");
         }
-        workingChannels = new ArrayList<>();
-        workingChannels.addAll(getConfig().getStringList("channelIds"));
         for (Object key : getConfig().getKeys(false).toArray()) {
             String k = (String) key;
             if (k.charAt(0) == k.toUpperCase().charAt(0)) {
@@ -238,19 +242,21 @@ public class DiscordConsole extends JavaPlugin {
                 getConfig().set(k, null);
             }
         }
-
         getConfig().options().copyDefaults(true);
         getConfig().options().header("Configuration file for DiscordConsole\nMade by DeltaRays (DeltaRays#0054 on Discord)\n\n ------ botToken ------ \nThe discord bot's token, if you don't know how to get it this is how to:\n" +
                 "Go to https://discordapp.com/developers/applications/, if you haven't created the application yet create one, otherwise open the application\n" +
                 "go to the Bot section and create a new bot, then copy the token and paste it in here" + "\n\n ------ channelIds ------ \nThe ids of the channels the console logs are going to be sent to, this is a config example, in which messages are going to be sent to three channels:\nchannelIds:\n- '660337933743816724'\n- '707221730946449450'\n- '707215090121834538'\n (Note: you can only edit channels when the server restarts) if you don't know how to get a channel id this is how to:\n" +
                 "go to your discord settings, in the Appearance tab scroll down to Advanced and there enable Developer Mode,\n" +
                 "Exit the settings and right click on the channel you want the logs to send to,\n" +
-                "and click on \"Copy ID\" to copy the id, and paste it in here" + "\n\n ------ channelRefreshRate ------\n In seconds, every how often the logs should be sent to the channel (minimum is 1 second)\n\n ------ consoleCommandsEnabled ------\n Whether anything typed in the console channel should be sent to the server as a console command, can be either true or false\n\n ------ sendStartupMessages ------ \nWhether the server startup messages should be sent to the discord console\n\n ------ checkForUpdates ------\nWhether or not new updates should be checked automatically (you can always just )\n\n ------ prefix ------\nChange the plugin's prefix to anything you'd like!\n\n ------ botStatus ------ \nThe bot's status (can be online, dnd (do not disturb), idle or invisible)\n\n ------ botStatusText ------ \nThe bot's status's text (What you see under their name), added after Playing (example: Playing 'on Minecraft'). You can also use placeholders to be able to customize the status more.\n%tps%: Returns the server's tps\n%player_count%: Sends the unvanished player count (supports SuperVanish, VanishNoPackets, PremiumVanish and a few more vanish plugins)\n%player_max%: Wends the maximum online players\n%date%: Sends the time\n%total_players%: Sends the number of players to have ever joined the server.\n%uptime%: Sends the server uptime\n%motd%: Sends the server motd\n%used_memory%: Sends the used memory in MB\n%max_memory%: Sends the max memory the server can use (use %used_memory_gb% and %max_memory_gb% for the memory in GB)\n\n ------ debug ------ \nWhether the debug messages should be sent in console\n");
+                "and click on \"Copy ID\" to copy the id, and paste it in here" + "\n\n ------ channelRefreshRate ------\n In seconds, every how often the logs should be sent to the channel (minimum is 1 second)\n\n ------ consoleCommandsEnabled ------\n Whether anything typed in the console channel should be sent to the server as a console command, can be either true or false\n\n ------ sendStartupMessages ------ \nWhether the server startup messages should be sent to the discord console\n\n ------ checkForUpdates ------\nWhether or not new updates should be checked automatically (you can always just )\n\n ------ prefix ------\nChange the plugin's prefix to anything you'd like!\n\n ------ botStatus ------ \nThe bot's status (can be online, dnd (do not disturb), idle or invisible)\n\n ------ botStatusText ------ \nThe bot's status's text (What you see under their name), added after Playing (example: Playing 'on Minecraft'). You can also use placeholders to be able to customize the status more.\n%player_count%: Sends the unvanished player count (supports SuperVanish, VanishNoPackets, PremiumVanish and a few more vanish plugins)\n%player_max%: Wends the maximum online players\n%date%: Sends the time\n%total_players%: Sends the number of players to have ever joined the server.\n%uptime%: Sends the server uptime\n%motd%: Sends the server motd\n%used_memory%: Sends the used memory in MB\n%max_memory%: Sends the max memory the server can use (use %used_memory_gb% and %max_memory_gb% for the memory in GB)\nNote: You can also use PlaceholderAPI placeholders\n\n ------ debug ------ \nWhether the debug messages should be sent in console\n");
         saveConfig();
+        reloadConfig();
+        workingChannels = new ArrayList<>();
+        workingChannels.addAll(getConfig().getStringList("channelIds"));
     }
 
     public void sendDiscordMessage(String message) {
-        workingChannels.forEach((Object cId) -> {
+        for (Object cId : workingChannels.toArray()) {
             try {
                 String channelId = (String) cId;
                 HttpURLConnection con;
@@ -274,21 +280,17 @@ public class DiscordConsole extends JavaPlugin {
                 out.close();
                 int responseCode = con.getResponseCode();
                 if (responseCode == 404) {
-                    Bukkit.getScheduler().runTask(this, () -> {
-                        getLogger().severe("Channel with id " + channelId + " doesn't exist!");
-                        workingChannels.remove(channelId);
-                    });
+                    getLogger().severe("Channel with id " + channelId + " doesn't exist!");
+                    workingChannels.remove(channelId);
                 } else if (responseCode == 403) {
-                    Bukkit.getScheduler().runTask(this, () -> {
-                        getLogger().severe("The bot can't type in " + channelId + "!");
-                        workingChannels.remove(channelId);
-                    });
+                    getLogger().severe("The bot can't type in " + channelId + "!");
+                    workingChannels.remove(channelId);
                 }
             } catch (Exception e) {
                 getLogger().severe("Error encountered in sending message to Discord!");
                 e.printStackTrace();
             }
-        });
+        }
     }
 
     public boolean hasInternetConnection() {
@@ -312,8 +314,7 @@ public class DiscordConsole extends JavaPlugin {
         if (socket != null) {
             if (socket.isOpen() && socket.isConnected()) {
                 String botStatus = getConfig().getString("botStatus");
-                ArrayList<String> statuses = new ArrayList<>();
-                statuses.addAll(Arrays.asList("online", "dnd", "invisible", "idle"));
+                ArrayList<String> statuses = new ArrayList<>(Arrays.asList("online", "dnd", "invisible", "idle"));
                 if (!statuses.contains(botStatus)) botStatus = "online";
                 JSONObject game = new JSONObject();
                 game.put("name", ConRef.replaceExpressions(getConfig().getString("botStatusText"), true));

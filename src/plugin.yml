@@ -1,8 +1,10 @@
 main: io.github.deltarays.discordconsole.DiscordConsole
 name: DiscordConsole
-version: 1.2.0
+version: 1.2.1
 author: DeltaRays
 description: Connect your minecraft console to a discord channel!
+softdepend:
+  - PlaceholderAPI
 commands:
   discordconsole:
     aliases:
