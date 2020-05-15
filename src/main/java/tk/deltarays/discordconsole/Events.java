@@ -1,5 +1,8 @@
-package io.github.deltarays.discordconsole;
+package tk.deltarays.discordconsole;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -8,10 +11,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -39,19 +39,19 @@ public class Events implements Listener {
         }
         if (player.isOp() && main.hasInternetConnection()) {
             try {
-                InputStream inputStream = new URL("https://api.github.com/repos/DeltaRays/DiscordConsole/releases").openStream();
-                Scanner scanner = new Scanner(inputStream);
-                StringBuilder response = new StringBuilder();
-                while (scanner.hasNext()) {
-                    response.append(scanner.next());
-                }
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder().url("https://api.github.com/repos/DeltaRays/DiscordConsole/releases").build();
+                Response response = client.newCall(request).execute();
                 JSONParser jsonParser = new JSONParser();
-                JSONArray releases = (JSONArray) jsonParser.parse(response.toString());
+                assert response.body() != null;
+                JSONArray releases = (JSONArray) jsonParser.parse(response.body().string());
+                response.close();
                 JSONObject latestRelease = (JSONObject) releases.get(0);
                 ArrayList<String> versions = new ArrayList<>();
                 for (Object t : releases.toArray()) {
                     JSONObject release = (JSONObject) t;
-                    versions.add((String) release.get("tag_name"));
+                    if (!((boolean) release.get("draft") || (boolean) release.get("prerelease")))
+                        versions.add((String) release.get("tag_name"));
                 }
                 if ((!main.getConfig().isSet("checkForUpdates") || main.getConfig().getBoolean("checkForUpdates")) && !latestRelease.get("tag_name").toString().equalsIgnoreCase(main.getDescription().getVersion())) {
                     player.sendMessage(String.format("§7You're §6%s §7version(s) behind! (Latest version: §6%s§7) §7Download it here: §6%s", versions.indexOf(main.getDescription().getVersion()), latestRelease.get("tag_name"), "https://www.spigotmc.org/resources/discordconsole.77503/"));

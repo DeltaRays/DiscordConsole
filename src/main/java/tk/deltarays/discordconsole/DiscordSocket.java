@@ -1,4 +1,4 @@
-package io.github.deltarays.discordconsole;
+package tk.deltarays.discordconsole;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -9,10 +9,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class DiscordSocket extends WebSocketClient {
     String lastS;
@@ -68,7 +65,7 @@ public class DiscordSocket extends WebSocketClient {
         if (s != null) {
             lastS = s;
         }
-        if (!main.getConfig().getString("botToken").matches("^(?i)[a-z0-9.\\-_]{32,100}$")) {
+        if (main.getConfig().getString("botToken") == null || !Objects.requireNonNull(main.getConfig().getString("botToken")).matches("^(?i)[a-z0-9.\\-_]{32,100}$")) {
             isInvalid = true;
             Bukkit.getScheduler().runTask(main, () -> main.getLogger().severe(ChatColor.DARK_RED + "An invalid bot token was provided! Go to the plugins folder, DiscordConsole, config.yml to modify the bot token"));
         }
@@ -80,14 +77,13 @@ public class DiscordSocket extends WebSocketClient {
             JSONObject response;
             if (!resume) {
                 String botStatus = main.getConfig().getString("botStatus");
-                ArrayList<String> statuses = new ArrayList<>();
-                statuses.addAll(Arrays.asList("online", "dnd", "invisible", "idle"));
+                ArrayList<String> statuses = new ArrayList<>(Arrays.asList("online", "dnd", "invisible", "idle"));
                 if (!statuses.contains(botStatus)) botStatus = "online";
                 JSONObject game = new JSONObject();
                 game.put("name", ConRef.replaceExpressions(main.getConfig().getString("botStatusText"), true));
                 game.put("type", 0);
                 JSONObject presResp = new JSONObject();
-                if (!main.getConfig().getString("botStatusText").isEmpty()) presResp.put("game", game);
+                if (main.getConfig().getString("botStatusText") != null && !main.getConfig().getString("botStatusText").isEmpty()) presResp.put("game", game);
                 presResp.put("status", botStatus);
                 JSONObject dProps = new JSONObject();
                 dProps.put("$os", "linux");
@@ -177,7 +173,7 @@ public class DiscordSocket extends WebSocketClient {
             } else if (t.contains("MESSAGE_CREATE")) {
                 if (main.getConfig().getBoolean("consoleCommandsEnabled")) {
                     String channelId = (String) d.get("channel_id");
-                    if (main.workingChannels.contains(channelId)) {
+                    if (main.workingChannels.containsKey(channelId)) {
                         JSONObject author = (JSONObject) d.get("author");
                         String senderId = (String) author.get("id");
                         if (!senderId.equalsIgnoreCase(botId)) {
@@ -214,7 +210,7 @@ public class DiscordSocket extends WebSocketClient {
             main.getLogger().severe("An invalid discord bot token was provided!");
         } else if (code == 1001 || code == 1006) {
             String token = main.getConfig().getString("botToken");
-            if (!token.matches("^(?i)[a-z0-9.\\-_]{32,100}$")) {
+            if (token != null && !token.matches("^(?i)[a-z0-9.\\-_]{32,100}$")) {
                 main.getLogger().severe("Invalid token provided");
             }
             main.getLogger().info("[Discord WebSocket] Got disconnected, reconnecting...");

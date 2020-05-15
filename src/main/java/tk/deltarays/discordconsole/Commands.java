@@ -1,5 +1,8 @@
-package io.github.deltarays.discordconsole;
+package tk.deltarays.discordconsole;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -8,12 +11,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 
 public class Commands implements TabExecutor, Listener {
     String maincmd = "discordconsole";
@@ -55,19 +55,19 @@ public class Commands implements TabExecutor, Listener {
                             sender.sendMessage("§cNo internet connection was found!");
                         } else {
                             try {
-                                InputStream inputStream = new URL("https://api.github.com/repos/DeltaRays/DiscordConsole/releases").openStream();
-                                Scanner scanner = new Scanner(inputStream);
-                                StringBuilder response = new StringBuilder();
-                                while (scanner.hasNext()) {
-                                    response.append(scanner.next());
-                                }
+                                OkHttpClient client = new OkHttpClient();
+                                Request request = new Request.Builder().url("https://api.github.com/repos/DeltaRays/DiscordConsole/releases").build();
+                                Response response = client.newCall(request).execute();
                                 JSONParser jsonParser = new JSONParser();
-                                JSONArray releases = (JSONArray) jsonParser.parse(response.toString());
+                                assert response.body() != null;
+                                JSONArray releases = (JSONArray) jsonParser.parse(response.body().string());
+                                response.close();
                                 JSONObject latestRelease = (JSONObject) releases.get(0);
                                 ArrayList<String> versions = new ArrayList<>();
                                 for (Object t : releases.toArray()) {
                                     JSONObject release = (JSONObject) t;
-                                    versions.add((String) release.get("tag_name"));
+                                    if (!((boolean) release.get("draft") || (boolean) release.get("prerelease")))
+                                        versions.add((String) release.get("tag_name"));
                                 }
                                 if (!versions.contains(main.getDescription().getVersion())) {
                                     sender.sendMessage("§cApparently you have a plugin version that doesn't exist in the releases list. Either you're in an experimental build or something is wrong. If you're not in an experimental build then you should download the latest release here: §b§n" + "https://www.spigotmc.org/resources/discordconsole.77503/");

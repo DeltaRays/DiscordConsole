@@ -1,4 +1,4 @@
-package io.github.deltarays.discordconsole;
+package tk.deltarays.discordconsole;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.core.LogEvent;
@@ -31,11 +31,11 @@ public class LogAppender extends AbstractAppender {
                         }
                         message.append(ln).append("\n");
                     }
-
                     if (StringUtils.isNotBlank(message.toString().replace("\n", ""))) {
                         main.sendDiscordMessage(message.toString());
                     }
                     main.updateBotStatus();
+                    main.updateChannelTopic();
                 } catch (Exception e) {
                     main.getLogger().severe("Error in sending console logs to channel!");
                     e.printStackTrace();
