@@ -382,7 +382,7 @@ public class DiscordConsole extends JavaPlugin {
                 } else {
                     StringBuilder newB = new StringBuilder();
                     for (String line : message.split("\n")) {
-                        if (pattern.matcher(line).find()) newB.append(line);
+                        if (pattern.matcher(line).find()) newB.append(line).append("\n");
                     }
                     if (!newB.toString().isEmpty()) {
                         JSONObject json = new JSONObject();
