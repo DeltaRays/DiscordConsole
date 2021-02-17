@@ -1,6 +1,8 @@
-main: tk.deltarays.discordconsole.DiscordConsole
+main: me.deltarays.discordconsole.DiscordConsole
 name: DiscordConsole
-version: 1.3.0
+api-version: 1.16
+version: 1.4.0
+load: STARTUP
 author: DeltaRays
 description: Connect your minecraft console to a discord channel!
 softdepend:
