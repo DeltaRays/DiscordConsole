@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="libs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/build/libs/DiscordConsole-New-1.0-SNAPSHOT.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/libs/DiscordConsole-New-1.0-SNAPSHOT-all.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
