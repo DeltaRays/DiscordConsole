@@ -30,10 +30,10 @@ class DiscordConsole : JavaPlugin() {
         configManager.loadConfig()
         newSocket()
         socket.connect()
-        Bukkit.getPluginManager().registerEvents(Events(this), this)
     }
 
     override fun onEnable() {
+        Bukkit.getPluginManager().registerEvents(Events(this), this)
     }
 
 

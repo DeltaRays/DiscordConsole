@@ -13,7 +13,7 @@ import kotlin.math.ceil
 
 class DiscordSocket(uri: URI) : WebSocketClient(uri) {
     private lateinit var plugin: DiscordConsole
-    lateinit var timer: Timer
+    var timer: Timer = Timer()
     var lastS: String? = null
     private var sessionId: String? = null
     private var isConnected = false
@@ -57,6 +57,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
     private val parser = JsonParser()
     private var ackReceived = true
     override fun onMessage(message: String?) {
+        Utils.logColored(plugin, "[Socket] Message received!\n$message", LogLevel.DEBUG)
         val payload: JsonObject = try {
             parser.parse(message).asJsonObject
         } catch (e: Exception) {
@@ -73,8 +74,8 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             return
         }
         val op: Int = payload.get("op").asInt
-        val s = payload.get("s").asString
-        if (s != null) this.lastS = s
+        val unparsedS = payload.get("s")
+        if (!unparsedS.isJsonNull) this.lastS = unparsedS.asString
         if (op == 10) {
             if (this.sessionId == null) {
                 val heartbeatInterval = payload.get("d").asJsonObject.get("heartbeat_interval").asLong
@@ -86,7 +87,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                         }
                         if (!ackReceived) {
 
-                            close(900, "No Heartbeat ACK received!")
+                            close(3333, "No Heartbeat ACK received!")
                         }
                         val obj = JsonObject().apply {
                             addProperty("op", 1)
@@ -140,15 +141,18 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                 }
             }, ceil(Math.random() * 5).toLong())
         } else if (op == 7) {
-            this.close(900, "Discord asked me to reconnect")
+            this.close(3333, "Discord asked me to reconnect")
+        } else if (op == 11) {
+            this.ackReceived = true;
         }
 
     }
 
     private fun handleReady(payload: JsonObject) {
         isConnected = true
-        this.sessionId = payload.get("session_id").asString
-        this.botId = payload.get("user").asJsonObject.get("id").asString
+        val d = payload.get("d").asJsonObject
+        this.sessionId = d.get("session_id").asString
+        this.botId = d.get("user").asJsonObject.get("id").asString
         Utils.logColored(plugin, "&a[Discord Connection] Successfully connected!", LogLevel.INFO)
     }
 
@@ -218,7 +222,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                 )
                 this.reconnect()
             }
-            900 -> {
+            3333 -> {
                 Utils.logColored(
                     plugin, "&e[Discord Connection] The bot was disconnected! Reconnecting...", LogLevel.INFO
                 )
