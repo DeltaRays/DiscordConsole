@@ -6,7 +6,7 @@ import java.io.File
  * @author DeltaRays
  * A class to manage the configuration file (for example to convert old config files to new versions without breaking anything)
  */
-class ConfigManager(private val plugin: DiscordConsole) {
+class ConfigManager(plugin: DiscordConsole) {
     lateinit var configuration: CustomConfig
     var configFile = File(plugin.dataFolder.absolutePath, "config.yml")
 

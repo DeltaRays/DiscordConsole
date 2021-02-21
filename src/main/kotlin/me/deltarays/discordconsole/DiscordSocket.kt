@@ -20,10 +20,6 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
     private lateinit var botId: String
     private var isInvalid = false
 
-    fun isConnected(): Boolean {
-        return this.isConnected
-    }
-
     companion object {
         fun getWSUrl(): String? {
             val client = OkHttpClient()

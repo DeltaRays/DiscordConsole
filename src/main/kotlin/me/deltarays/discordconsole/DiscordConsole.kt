@@ -11,9 +11,9 @@ import java.net.URI
  * The main class of the DiscordConsole plugin
  */
 class DiscordConsole : JavaPlugin() {
-    val logger: Logger = LogManager.getRootLogger()
+    private val logger: Logger = LogManager.getRootLogger()
     private val configManager = ConfigManager(this)
-    var serverHasStartedUp = false;
+    var serverHasStartedUp = false
 
     /**
      * Gets the custom yaml configuration
@@ -47,7 +47,7 @@ class DiscordConsole : JavaPlugin() {
         val url = DiscordSocket.getWSUrl()
         if (url == null)
             logger.error("Error encountered while connecting to discord!")
-        socket = DiscordSocket(URI.create(url))
+        socket = DiscordSocket(URI.create(url as String))
         socket.setHandlingPlugin(this)
     }
 

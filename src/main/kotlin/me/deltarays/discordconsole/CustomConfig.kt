@@ -9,7 +9,7 @@ import org.bukkit.configuration.file.YamlConfiguration
  * Created to add comment support to snakeyaml
  */
 class CustomConfig : YamlConfiguration() {
-    var comments: Int = 0
+    private var comments: Int = 0
 
     /**
      * Saves the yaml (with comments) to a string

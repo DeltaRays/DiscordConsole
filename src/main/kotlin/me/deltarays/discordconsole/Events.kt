@@ -6,7 +6,7 @@ import org.bukkit.event.server.ServerLoadEvent
 
 class Events(private val plugin: DiscordConsole) : Listener {
     @EventHandler
-    public fun serverStartup(event: ServerLoadEvent) {
+    fun serverStartup(event: ServerLoadEvent) {
         plugin.serverHasStartedUp = true;
     }
 }
