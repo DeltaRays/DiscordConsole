@@ -1,5 +1,6 @@
 package me.deltarays.discordconsole
 
+import org.bukkit.configuration.ConfigurationSection
 import java.io.File
 
 /**
@@ -22,5 +23,34 @@ class ConfigManager(plugin: DiscordConsole) {
         configFile.createNewFile()
         configuration = CustomConfig()
         configuration.load(configFile)
+    }
+
+
+    /**
+     * Gets the current bot token.
+     * @return The bot token
+     */
+    fun getBotToken(): String? {
+        val botSection: ConfigurationSection =
+            configuration.getConfigurationSection("bot") ?: configuration.createSection("bot")
+        return botSection.getString("token")
+    }
+
+    /**
+     * Gets the ConfigurationSection containing the channels.
+     */
+
+    private fun getChannels(): ConfigurationSection {
+        var section = configuration.getConfigurationSection("channels")
+        if (section == null) section = configuration.createSection("channels")
+        return section
+    }
+
+    /**
+     * Gets a channel's ConfigurationSection from its id.
+     */
+    fun getChannel(id: String): ConfigurationSection {
+        val channels = getChannels()
+        return channels.getConfigurationSection(id) ?: channels.createSection(id)
     }
 }
