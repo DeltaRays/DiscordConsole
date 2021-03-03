@@ -16,7 +16,13 @@ object Utils {
         return ChatColor.translateAlternateColorCodes('&', text)
     }
 
-    fun logColored(plugin: DiscordConsole, text: String, level: LogLevel) {
+    /**
+     * Logs a colored message using colored codes to the console
+     * @param level The LogLevel
+     * @param prefix The prefix of the plugin for the logs
+     *
+     */
+    fun logColored(prefix: String, text: String, level: LogLevel) {
         val levelMsg =
             when (level) {
                 LogLevel.WARNING -> "&e[WARNING] &r"
@@ -25,10 +31,13 @@ object Utils {
                 else -> ""
             }
         Bukkit.getConsoleSender()
-            .sendMessage(tacc(String.format("%s%s %s", levelMsg, plugin.getConfigManager().getPrefix(), text)))
+            .sendMessage(tacc(String.format("%s%s %s", levelMsg, prefix, text)))
     }
 }
 
+/**
+ * The levels of messages that can be sent to the console
+ */
 enum class LogLevel {
     INFO,
     WARNING,

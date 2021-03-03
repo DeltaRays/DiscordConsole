@@ -1,5 +1,6 @@
 package me.deltarays.discordconsole
 
+import me.deltarays.discordconsole.logging.DiscordChannel
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.bukkit.Bukkit
@@ -7,8 +8,52 @@ import org.bukkit.plugin.java.JavaPlugin
 import java.net.URI
 
 /**
- * @author DeltaRays
+ * ```yaml
+ *  bot:
+ *      token: BOTTOKEN
+ *      status: online | dnd | invisible
+ *      activity:
+ *          text: STRING
+ *          type: playing | other stuff
+ *
+ *  prefix: "&7[&6DiscordConsole&7]"
+ *  check-updated: BOOLEAN
+ *  channels:
+ *      'ID':
+ *          refresh-rate: NUMBER
+ *          console:
+ *              format: ''
+ *              commands: BOOLEAN # Whether or not messages sent in that channel get executed as console commands
+ *              topic: STRING # The discord channel's topic
+ *              send-startup: BOOLEAN # Whether or not to send startup messages
+ *              filter: REGEX
+ *          chat:
+ *              format: ''
+ *              topic: STRING
+ *              filter: REGEX
+ *          joins:
+ *              format: ''
+ *              topic: STRING
+ *              filter: REGEX
+ *          quits:
+ *              format: ''
+ *              topic: STRING
+ *              filter: REGEX
+ *
+ *  commands:
+ *      NAME: MESSAGE
+ *
+ *  discord commands:
+ *      NAME: MESSAGE
+ *
+ *  debug: BOOLEAN
+ * ```
+ */
+
+
+/**
  * The main class of the DiscordConsole plugin
+ * @author DeltaRays
  */
 class DiscordConsole : JavaPlugin() {
     private val logger: Logger = LogManager.getRootLogger()
@@ -27,9 +72,20 @@ class DiscordConsole : JavaPlugin() {
     }
 
     override fun onLoad() {
+        resetChannels()
         configManager.loadConfig()
         newSocket()
         socket.connect()
+    }
+
+    /**
+     * Removes the discord channels and bulk sends all remaining messages
+     */
+    private fun resetChannels() {
+        DiscordChannel.channels.forEachIndexed { index, discordChannel ->
+            DiscordChannel.channels.removeAt(index);
+            discordChannel.flush()
+        }
     }
 
     override fun onEnable() {
