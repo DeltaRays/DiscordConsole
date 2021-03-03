@@ -2,6 +2,9 @@ package me.deltarays.discordconsole
 
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.player.AsyncPlayerChatEvent
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.server.ServerLoadEvent
 
 class Events(private val plugin: DiscordConsole) : Listener {
@@ -9,5 +12,20 @@ class Events(private val plugin: DiscordConsole) : Listener {
     fun serverStartup(evt: ServerLoadEvent) {
         if (evt.type === ServerLoadEvent.LoadType.STARTUP)
             plugin.serverHasStartedUp = true
+    }
+
+    @EventHandler
+    fun chat(evt: AsyncPlayerChatEvent) {
+        TODO()
+    }
+
+    @EventHandler
+    fun joins(evt: PlayerJoinEvent) {
+        TODO()
+    }
+
+    @EventHandler
+    fun quits(evt: PlayerQuitEvent) {
+        TODO()
     }
 }
