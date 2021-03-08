@@ -18,7 +18,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
     private var isConnected = false
     private lateinit var botId: String
     private var isInvalid = false
-    private lateinit var job: Job
+    lateinit var job: Job
 
     companion object {
         fun getWSUrl(): String? {

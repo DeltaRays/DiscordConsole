@@ -1,5 +1,6 @@
 package me.deltarays.discordconsole
 
+import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerChatEvent
@@ -21,6 +22,10 @@ class Events(private val plugin: DiscordConsole) : Listener {
 
     @EventHandler
     fun joins(evt: PlayerJoinEvent) {
+        val p = evt.player
+        if(p.isOp || p.hasPermission("discordconsole.admin")){
+
+        }
         TODO()
     }
 

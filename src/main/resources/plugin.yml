@@ -11,5 +11,7 @@ commands:
   discordconsole:
     aliases:
       - discordc
+    permission: discordconsole.admin
+    permission-message: "You don't have permission to use this command!"
     description: The plugin's main command
     usage: discordconsole [<reload|updatecheck>]

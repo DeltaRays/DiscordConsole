@@ -36,10 +36,13 @@ class ConfigManager(plugin: DiscordConsole) {
         return botSection.getString("token")
     }
 
+    fun shouldCheckUpdates(): Boolean {
+        return configuration.getBoolean("check-updates", true)
+    }
+
     /**
      * Gets the ConfigurationSection containing the channels.
      */
-
     private fun getChannels(): ConfigurationSection {
         var section = configuration.getConfigurationSection("channels")
         if (section == null) section = configuration.createSection("channels")

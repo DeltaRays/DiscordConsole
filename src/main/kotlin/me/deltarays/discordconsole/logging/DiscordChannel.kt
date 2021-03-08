@@ -13,7 +13,7 @@ import okhttp3.RequestBody
 import java.util.*
 
 
-class DiscordChannel(private val id: String, private val plugin: DiscordConsole, var types: HashMap<String, LogType>) {
+class DiscordChannel(val id: String, private val plugin: DiscordConsole, var types: HashMap<String, LogType>) {
     private val client = OkHttpClient()
     private var queue: Queue<String> = LinkedList()
     var job: Job
@@ -46,6 +46,7 @@ class DiscordChannel(private val id: String, private val plugin: DiscordConsole,
                 if (builder.length + value.length > 1999) {
                     sendMessage(builder.toString())
                     builder.clear()
+                    delay(100)
                 }
                 builder.appendLine(value)
             }
