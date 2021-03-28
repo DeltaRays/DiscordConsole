@@ -1,6 +1,7 @@
 package me.deltarays.discordconsole
 
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import kotlinx.coroutines.*
@@ -57,7 +58,12 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
     private val parser = JsonParser()
     private var ackReceived = true
     override fun onMessage(message: String?) {
-        Utils.logColored(plugin.getConfigManager().getPrefix(), "[Socket] Message received!\n$message", LogLevel.DEBUG)
+        if (plugin.config.getBoolean("debug", false))
+            Utils.logColored(
+                plugin.getConfigManager().getPrefix(),
+                "[Socket] Message received!\n$message",
+                LogLevel.DEBUG
+            )
         val payload: JsonObject = try {
             parser.parse(message).asJsonObject
         } catch (e: Exception) {
@@ -107,6 +113,34 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                             addProperty("\$browser", "DiscordSocket")
                             addProperty("\$device", "DiscordConsole")
                         })
+                        val botSection = plugin.getConfigManager().getBotSection()
+                        add("presence", JsonObject().apply {
+                            if (botSection.isString("status"))
+                                addProperty("status", botSection.getString("status"))
+                            if (botSection.isConfigurationSection("activity")) {
+                                val activitySection = botSection.getConfigurationSection("activity")
+                                    ?: botSection.createSection("activity")
+                                add("activities", JsonArray().apply {
+                                    add(JsonObject().apply {
+                                        addProperty("name", activitySection.getString("name"))
+                                        addProperty(
+                                            "type",
+                                            activityNameToInt(activitySection.getString("type", "game"))
+                                        )
+                                        for (key in activitySection.getKeys(false)) {
+                                            if (!listOf("name", "type").contains(key)) {
+                                                if (activitySection.isString(key))
+                                                    addProperty(key, activitySection.getString("key"))
+                                                else if (activitySection.isBoolean(key))
+                                                    addProperty(key, activitySection.getBoolean("key"))
+                                                else
+                                                    addProperty(key, activitySection.get("key") as Int)
+                                            }
+                                        }
+                                    })
+                                })
+                            }
+                        })
                     })
                 }
                 send(obj.toString())
@@ -128,16 +162,29 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                 "MESSAGE_CREATE" -> handleMessage()
             }
         } else if (op == 9) {
-            Utils.logColored(
-                plugin.getConfigManager().getPrefix(),
-                "&e[Discord Connection] Unable to resume from when the bot was last connected! Creating a new connection...",
-                LogLevel.WARNING
-            )
-            this.sessionId = null
-            this.lastS = null
-            GlobalScope.launch(Dispatchers.Default) {
-                delay(ceil(Math.random() * 5).toLong())
-                reconnect()
+            val d = payload.get("d").asBoolean
+            // d represents whether or not the session is resumable
+            plugin.logger.info(d.toString())
+            if (d) {
+                Utils.logColored(
+                    plugin.getConfigManager().getPrefix(),
+                    "&e[Discord Connection] Unable to resume from when the bot was last connected! Creating a new connection...",
+                    LogLevel.WARNING
+                )
+                this.sessionId = null
+                this.lastS = null
+                GlobalScope.launch(Dispatchers.Default) {
+                    delay(ceil(Math.random() * 5).toLong())
+                    reconnect()
+                }
+            } else {
+                this.sessionId = null
+                this.lastS = null
+                Utils.logColored(
+                    plugin.getConfigManager().getPrefix(),
+                    "&c[Discord Connection] Session was marked as invalid by Discord! Check all your config data as there might be something incorrect.",
+                    LogLevel.SEVERE
+                )
             }
         } else if (op == 7) {
             this.close(3333, "Discord asked me to reconnect")
@@ -250,5 +297,17 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             "&c[Discord Connection] Error!\nMessage: &f" + e?.message + "\n&cSet debug to true in the config to find out more!",
             LogLevel.SEVERE
         )
+    }
+}
+
+
+fun activityNameToInt(activity: String?): Short? {
+    return when (activity?.toLowerCase()) {
+        "game" -> 0
+        "streaming" -> 1
+        "listening" -> 2
+        "custom" -> 4
+        "competing" -> 5
+        else -> null
     }
 }

@@ -18,7 +18,7 @@ import java.net.URI
  *      token: BOTTOKEN
  *      status: online | dnd | invisible
  *      activity:
- *          text: STRING
+ *          name: STRING
  *          type: playing | other stuff
  *
  *  prefix: "&7[&6DiscordConsole&7]"

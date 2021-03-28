@@ -25,14 +25,16 @@ class ConfigManager(plugin: DiscordConsole) {
         configuration.load(configFile)
     }
 
+    fun getBotSection(): ConfigurationSection {
+        return configuration.getConfigurationSection("bot") ?: configuration.createSection("bot")
+    }
 
     /**
      * Gets the current bot token.
      * @return The bot token
      */
     fun getBotToken(): String? {
-        val botSection: ConfigurationSection =
-            configuration.getConfigurationSection("bot") ?: configuration.createSection("bot")
+        val botSection = getBotSection()
         return botSection.getString("token")
     }
 
