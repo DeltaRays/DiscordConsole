@@ -16,6 +16,7 @@ import java.util.*
 class DiscordChannel(val id: String, private val plugin: DiscordConsole, var types: HashMap<String, LogType>) {
     private val client = OkHttpClient()
     private var queue: Queue<String> = LinkedList()
+    private var canChangeTopic = false
     var job: Job
 
     init {
@@ -56,6 +57,10 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
     companion object {
         val channels = mutableListOf<DiscordChannel>()
+
+        fun initializeAll(){
+            TODO("Need to make the method to init the channel")
+        }
     }
 
     fun enqueueMessage(message: String) {
@@ -89,10 +94,15 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                 val response = client.newCall(request).execute()
                 val code = response.code()
                 if (code == 404) {
-                    Utils.logColored(plugin.getConfigManager().getPrefix(), "&cChannel with id &4$id &cdoesn't exist!", LogLevel.SEVERE)
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cChannel with id &4$id &cdoesn't exist!",
+                        LogLevel.SEVERE
+                    )
                     channels.remove(this@DiscordChannel)
                 } else if (code == 403) {
-                    Utils.logColored(plugin.getConfigManager().getPrefix(),
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
                         "&cThe bot doesn't have access to channel with id &4$id&c!",
                         LogLevel.SEVERE
                     )
@@ -102,4 +112,53 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
             }
         }
+
+    @Suppress("BlockingMethodInNonBlockingContext")
+    suspend fun setTopic(topic: String) = coroutineScope {
+        withContext(Dispatchers.IO) {
+            if (!canChangeTopic) return@withContext
+            if (topic.length > 1024) {
+                Utils.logColored(
+                    plugin.getConfigManager().getPrefix(),
+                    "&cThe channel with id $id's topic must be less than 1024 characters long!",
+                    LogLevel.WARNING
+                )
+                return@withContext
+            }
+            val obj = JsonObject().apply {
+                addProperty("topic", topic)
+            }
+            val body = RequestBody.create(MediaType.get("application/json"), obj.toString())
+            val request = Request.Builder()
+                .url("https://discordapp.com/api/v8/channels/$id")
+                .patch(body)
+                .addHeader("Authorization", "Bot ${plugin.getConfigManager().getBotToken()}")
+                .build()
+            val response = client.newCall(request).execute()
+            val code = response.code()
+            if (code == 400) {
+                Utils.logColored(
+                    plugin.getConfigManager().getPrefix(),
+                    "&cThe parameters sent to channel $id's topic change are invalid! Topic changing for that channel will be disabled until a reload",
+                    LogLevel.WARNING
+                )
+                canChangeTopic = false
+            } else if (code == 404) {
+                Utils.logColored(
+                    plugin.getConfigManager().getPrefix(),
+                    "&cChannel with id &4$id &cdoesn't exist! Their topic won't be changed!",
+                    LogLevel.WARNING
+                )
+                channels.remove(this@DiscordChannel)
+            } else if (code == 403) {
+                Utils.logColored(
+                    plugin.getConfigManager().getPrefix(),
+                    "&cThe bot doesn't have access to edit channel &4$id&c's topic! Topic changing for that channel will be disabled until a reload",
+                    LogLevel.WARNING
+                )
+                canChangeTopic = false
+            }
+            response.close()
+        }
+    }
 }
