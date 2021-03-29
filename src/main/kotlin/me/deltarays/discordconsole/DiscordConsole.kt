@@ -110,6 +110,14 @@ class DiscordConsole : JavaPlugin() {
             val (logLevel, message) = checkUpdates()
             Utils.logColored(configManager.getPrefix(), message, logLevel)
         }
+        if (isFirstLoad) {
+            Utils.logColored(
+                configManager.getPrefix(),
+                "&7Thanks for installing DiscordConsole!\n" +
+                        " To understand how to use it make sure to check https://github.com/DeltaRays/DiscordConsole/wiki out!",
+                LogLevel.INFO
+            )
+        }
     }
 
 
