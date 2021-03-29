@@ -23,7 +23,7 @@ import java.net.URI
  *          type: playing | other stuff
  *
  *  prefix: "&7[&6DiscordConsole&7]"
- *  check-updated: BOOLEAN
+ *  check-updates: BOOLEAN
  *  channels:
  *      'ID':
  *          refresh-rate: NUMBER
@@ -154,6 +154,7 @@ class DiscordConsole : JavaPlugin() {
         }
 
         var serverHasStartedUp = false
+        var isFirstLoad = false
     }
 
     fun checkUpdates(): Pair<LogLevel, String> {

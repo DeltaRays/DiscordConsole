@@ -19,7 +19,10 @@ class ConfigManager(plugin: DiscordConsole) {
      * Loads the configuration file inside the {@see configuration}
      */
     fun loadConfig() {
-        if (!configFile.exists()) configFile.parentFile.mkdirs()
+        if (!configFile.exists()){
+            configFile.parentFile.mkdirs()
+            DiscordConsole.isFirstLoad = true
+        }
         configFile.createNewFile()
         configuration = CustomConfig()
         configuration.load(configFile)

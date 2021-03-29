@@ -23,7 +23,10 @@ class Events(private val plugin: DiscordConsole) : Listener {
     fun joins(evt: PlayerJoinEvent) {
         val p = evt.player
         if (p.isOp || p.hasPermission("discordconsole.admin")) {
-
+            if (DiscordConsole.isFirstLoad)
+                p.sendMessage(Utils.tacc("&7Thanks for installing DiscordConsole!\n To understand how to use it make sure to check https://github.com/DeltaRays/DiscordConsole/wiki out!"))
+            if (plugin.getConfigManager().shouldCheckUpdates())
+                p.sendMessage(Utils.tacc(plugin.checkUpdates().second))
         }
         TODO()
     }
