@@ -15,6 +15,8 @@ import org.bukkit.Bukkit
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.net.URI
+import java.text.SimpleDateFormat
+import java.util.*
 import kotlin.math.ceil
 
 class DiscordSocket(uri: URI) : WebSocketClient(uri) {
@@ -229,8 +231,27 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             c.id == channelId
         }
         if (authorId == botId) return@launch
+        val member = d.get("member").asJsonObject
         if (channel != null) {
-            if (channel.types.containsValue(LogType.CONSOLE)) {
+            if (channel.types.containsValue(LogType.CHAT)) {
+                val channelSection = plugin.getConfigManager().getChannel(channel.id)
+                val chatSection = channelSection.getConfigurationSection("chat") ?: channelSection.createSection("chat")
+                val discordMinecraftSection = chatSection.getConfigurationSection("minecraft-discord")
+                    ?: chatSection.createSection("minecraft-discord")
+                if (discordMinecraftSection.getBoolean("enabled", false)) {
+                    val parsed = Utils.convertPlaceholders(
+                        content,
+                        channel = channel,
+                        guild = channel.guild,
+                        memberUser = Pair(member, author)
+                    )
+                        .replace(Regex("%date\\[(.*?)]%", RegexOption.IGNORE_CASE)) { e ->
+                            val dateFormat = SimpleDateFormat(e.groupValues.getOrElse(0) { "HH:mm:ss" });
+                            dateFormat.format(Date())
+                        }
+                    Bukkit.broadcastMessage(parsed)
+                }
+            } else if (channel.types.containsValue(LogType.CONSOLE)) {
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val consoleSection =
                     channelSection.getConfigurationSection("console") ?: channelSection.createSection("console")
@@ -243,7 +264,6 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             }
         }
         val discordCommandSection = plugin.getConfigManager().getCustomDiscordCmdSection()
-        val member = d.get("member").asJsonObject
         for (key in discordCommandSection.getKeys(false)) {
             if (content.startsWith(key)) {
                 val code = DiscordChannel.sendMessage(
