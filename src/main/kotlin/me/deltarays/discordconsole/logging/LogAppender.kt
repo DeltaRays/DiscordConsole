@@ -7,10 +7,10 @@ import org.apache.logging.log4j.core.appender.AbstractAppender
 import org.apache.logging.log4j.core.config.Property
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.regex.Pattern
 
 class LogAppender(private var plugin: DiscordConsole) :
     AbstractAppender("DiscordConsoleAppender", null, null, false, Property.EMPTY_ARRAY) {
-    var sendStartupMessages = plugin.config.getBoolean("send-startup-messages", false)
     override fun append(event: LogEvent?) {
         val logEvt: LogEvent?;
         val method = try {
@@ -30,12 +30,20 @@ class LogAppender(private var plugin: DiscordConsole) :
             LogEvent::class.java.getMethod("getMillis").invoke(logEvt)
         } as Long
         val message = logEvt?.message?.formattedMessage as String
-        if (sendStartupMessages || DiscordConsole.serverHasStartedUp) {
-            for (channel in DiscordChannel.channels) {
-                if (channel.types.contains("CONSOLE")) {
+        for (channel in DiscordChannel.channels) {
+            if (channel.types.contains("CONSOLE")) {
+                val channelSection = plugin.getConfigManager().getChannel(channel.id)
+                val consoleSection =
+                    channelSection.getConfigurationSection("console") ?: channelSection.createSection("console")
+                if (consoleSection.getBoolean("send-startup", false) || DiscordConsole.serverHasStartedUp) {
                     val fmt: String = channel.getMessageFormat(LogType.CONSOLE)
                     val formatted =
                         parse(fmt, logEvt.level.name(), message, logEvt.threadName, timeMillis)
+                    val filterStr = consoleSection.getString("filter") ?: ""
+                    if (filterStr.isNotEmpty()) {
+                        val filter = Pattern.compile(filterStr)
+                        if (!filter.matcher(formatted).find()) continue
+                    }
                     channel.enqueueMessage(formatted)
                 }
             }

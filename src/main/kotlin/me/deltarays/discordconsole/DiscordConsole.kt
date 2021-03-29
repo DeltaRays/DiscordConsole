@@ -30,8 +30,7 @@ import java.net.URI
  *          topic: 'STRING'
  *          console:
  *              format: ''
- *              commands: BOOLEAN # Whether or not messages sent in that channel get executed as console commands
- *              topic: STRING # The discord channel's topic
+ *              commands-enabled: BOOLEAN # Whether or not messages sent in that channel get executed as console commands
  *              send-startup: BOOLEAN # Whether or not to send startup messages
  *              filter: REGEX
  *          chat:
