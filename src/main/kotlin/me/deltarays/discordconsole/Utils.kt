@@ -1,5 +1,6 @@
 package me.deltarays.discordconsole
 
+import com.google.gson.JsonObject
 import me.clip.placeholderapi.PlaceholderAPI
 import me.deltarays.discordconsole.discord.DiscordChannel
 import me.deltarays.discordconsole.discord.DiscordGuild
@@ -9,8 +10,6 @@ import org.bukkit.entity.Player
 import org.bukkit.metadata.MetadataValue
 import java.util.*
 import kotlin.collections.HashMap
-import java.awt.SystemColor.text
-import java.lang.StringBuilder
 
 
 /**
@@ -44,14 +43,12 @@ object Utils {
             .sendMessage(tacc(String.format("%s%s %s", levelMsg, prefix, text)))
     }
 
-    private val runtime = Runtime.getRuntime()
-    private val byteToGB = 1073741824
-    private val byteToMB = 1048576
     fun convertPlaceholders(
         initMessage: String,
         player: Player? = null,
         channel: DiscordChannel? = null,
-        guild: DiscordGuild? = null
+        guild: DiscordGuild? = null,
+        memberUser: Pair<JsonObject, JsonObject>? = null
     ): String {
         var message = initMessage
         val unvanishedPlayers = Bukkit.getOnlinePlayers().filter { p ->
@@ -80,6 +77,12 @@ object Utils {
                 put("guild_members", guild.memberCount.toString())
                 put("guild_description", guild.description)
             }
+            if (memberUser != null) {
+                put("member_nickname", memberUser.first.get("nick").asString)
+                put("member_joined_at", Date(memberUser.first.get("joined_at").asLong).toString())
+                put("member_id", memberUser.second.get("id").asString)
+                put("member_username", memberUser.second.get("username").asString)
+            }
         }
 
         val arr = message.toCharArray()
@@ -91,7 +94,8 @@ object Utils {
             } else {
                 val start = i++
                 while (arr[i] != '%') i++
-                val chars = placeholders[message.substring(start, i)]
+                val placeholder = message.substring(start + 1, i - 1)
+                val chars = placeholders[placeholder]
                 stringBuilder.append(chars)
             }
             ++i

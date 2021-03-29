@@ -38,15 +38,16 @@ import java.net.URI
  *              filter: REGEX
  *          chat:
  *              format: ''
- *              topic: STRING
  *              filter: REGEX
+ *              discord-minecraft:
+ *                  enabled: BOOLEAN # Whether or not anything sent in that channel will be sent as a chat message
+ *                  format: ''
+ *
  *          joins:
  *              format: ''
- *              topic: STRING
  *              filter: REGEX
  *          quits:
  *              format: ''
- *              topic: STRING
  *              filter: REGEX
  *
  *  commands:

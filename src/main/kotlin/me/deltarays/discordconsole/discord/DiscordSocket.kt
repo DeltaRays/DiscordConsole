@@ -243,12 +243,16 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             }
         }
         val discordCommandSection = plugin.getConfigManager().getCustomDiscordCmdSection()
+        val member = d.get("member").asJsonObject
         for (key in discordCommandSection.getKeys(false)) {
             if (content.startsWith(key)) {
                 val code = DiscordChannel.sendMessage(
                     channelId,
                     plugin.getConfigManager().getBotToken() ?: "",
-                    Utils.convertPlaceholders(discordCommandSection.get(key).toString())
+                    Utils.convertPlaceholders(
+                        discordCommandSection.get(key).toString(),
+                        memberUser = Pair(member, author)
+                    )
                 ).await()
                 if (code == 403) {
                     Utils.logColored(
