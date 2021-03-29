@@ -214,7 +214,7 @@ class DiscordConsole : JavaPlugin() {
         val cmdSection = configManager.getCustomCmdSection()
         cmdSection.getKeys(false).forEach { key ->
             val value = cmdSection.get(key).toString()
-            commandMap?.register(key, "discordconsole", CustomCommand(key, Utils.convertPlaceholders(value)))
+            commandMap?.register(key, "discordconsole", CustomCommand(key, value))
             Bukkit.getOnlinePlayers().forEach { player ->
                 player.updateCommands()
             }

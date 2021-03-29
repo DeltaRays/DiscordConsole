@@ -47,13 +47,18 @@ object Utils {
     private val runtime = Runtime.getRuntime()
     private val byteToGB = 1073741824
     private val byteToMB = 1048576
-    fun convertPlaceholders(initMessage: String, channel: DiscordChannel? = null, guild: DiscordGuild? = null): String {
+    fun convertPlaceholders(
+        initMessage: String,
+        player: Player? = null,
+        channel: DiscordChannel? = null,
+        guild: DiscordGuild? = null
+    ): String {
         var message = initMessage
         val unvanishedPlayers = Bukkit.getOnlinePlayers().filter { p ->
             !isVanished(p)
         }.size
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)
-            message = PlaceholderAPI.setPlaceholders(null, initMessage)
+            message = PlaceholderAPI.setPlaceholders(player, initMessage)
 
         val placeholders = HashMap<String, String>().apply {
             put("player_count", unvanishedPlayers.toString())
