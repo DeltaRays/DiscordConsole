@@ -62,14 +62,14 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                         "&cChannel with id &4$id &cdoesn't exist!",
                         LogLevel.SEVERE
                     )
-                    channels.remove(this@DiscordChannel)
+                    destroy()
                 } else if (code == 403) {
                     Utils.logColored(
                         plugin.getConfigManager().getPrefix(),
                         "&cThe bot doesn't have access to channel with id &4$id&c!",
                         LogLevel.SEVERE
                     )
-                    channels.remove(this@DiscordChannel)
+                    destroy()
                 }
                 val json = parser.parse(response.body()?.string()).asJsonObject
                 val guildId = json.get("guild_id").asString
@@ -115,10 +115,30 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
     companion object {
         val channels = mutableListOf<DiscordChannel>()
-
+        private val client = OkHttpClient()
         fun initializeAll() {
             TODO("Need to make the method to init the channel")
         }
+
+        fun sendMessage(channelId: String, botToken: String, message: String): Deferred<Int> =
+            GlobalScope.async(Dispatchers.IO) {
+                val obj = JsonObject().apply {
+                    add("allowed_mentions", JsonObject().apply {
+                        add("parse", JsonArray())
+                    })
+                    addProperty("content", message)
+                }
+                val body = RequestBody.create(MediaType.get("application/json"), obj.toString())
+                val request = Request.Builder()
+                    .url("$BASE_API_URL/channels/$channelId/messages")
+                    .post(body)
+                    .addHeader("Authorization", "Bot $botToken")
+                    .build()
+                val response = client.newCall(request).execute()
+                val code = response.code()
+                response.close()
+                return@async code
+            }
     }
 
     fun enqueueMessage(message: String) {
@@ -141,37 +161,23 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     suspend fun sendMessage(message: String) =
         coroutineScope {
             withContext(Dispatchers.IO) {
-                val obj = JsonObject().apply {
-                    add("allowed_mentions", JsonObject().apply {
-                        add("parse", JsonArray())
-                    })
-                    addProperty("content", message)
-                }
-                val body = RequestBody.create(MediaType.get("application/json"), obj.toString())
-                val request = Request.Builder()
-                    .url("$BASE_API_URL/channels/$id/messages")
-                    .post(body)
-                    .addHeader("Authorization", "Bot ${plugin.getConfigManager().getBotToken()}")
-                    .build()
-                val response = client.newCall(request).execute()
-                val code = response.code()
+                val code = Companion.sendMessage(id, plugin.getConfigManager().getBotToken() ?: "", message).await()
                 if (code == 404) {
                     Utils.logColored(
                         plugin.getConfigManager().getPrefix(),
                         "&cChannel with id &4$id &cdoesn't exist!",
                         LogLevel.SEVERE
                     )
-                    channels.remove(this@DiscordChannel)
+                    destroy()
                 } else if (code == 403) {
                     Utils.logColored(
                         plugin.getConfigManager().getPrefix(),
                         "&cThe bot doesn't have access to channel with id &4$id&c!",
                         LogLevel.SEVERE
                     )
-                    channels.remove(this@DiscordChannel)
+                    destroy()
                 }
-                response.close()
-
+                return@withContext
             }
         }
 
@@ -211,7 +217,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                     "&cChannel with id &4$id &cdoesn't exist! Their topic won't be changed!",
                     LogLevel.WARNING
                 )
-                channels.remove(this@DiscordChannel)
+                destroy()
             } else if (code == 403) {
                 Utils.logColored(
                     plugin.getConfigManager().getPrefix(),

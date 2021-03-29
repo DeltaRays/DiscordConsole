@@ -54,7 +54,7 @@ import java.net.URI
  *      #discordlink: https://discord.gg/WSaWztJ
  *
  *
- *  discord commands:
+ *  discord-commands:
  *      NAME: MESSAGE
  *
  *  debug: BOOLEAN

@@ -238,10 +238,27 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                     Bukkit.getScheduler().runTask(plugin, Runnable {
                         Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), content)
                     })
+                    return@launch
                 }
             }
         }
-        TODO()
+        val discordCommandSection = plugin.getConfigManager().getCustomDiscordCmdSection()
+        for (key in discordCommandSection.getKeys(false)) {
+            if (content.startsWith(key)) {
+                val code = DiscordChannel.sendMessage(
+                    channelId,
+                    plugin.getConfigManager().getBotToken() ?: "",
+                    Utils.convertPlaceholders(discordCommandSection.get(key).toString())
+                ).await()
+                if (code == 403) {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cThe bot doesn't have access to send messages to channel with id &4$channelId&c!",
+                        LogLevel.SEVERE
+                    )
+                }
+            }
+        }
     }
 
     override fun onClose(code: Int, reason: String?, remote: Boolean) {

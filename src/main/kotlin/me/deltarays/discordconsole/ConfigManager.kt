@@ -65,4 +65,9 @@ class ConfigManager(plugin: DiscordConsole) {
     fun getCustomCmdSection(): ConfigurationSection {
         return configuration.getConfigurationSection("commands") ?: configuration.createSection("commands")
     }
+
+    fun getCustomDiscordCmdSection(): ConfigurationSection {
+        return configuration.getConfigurationSection("discord-commands") ?: configuration.createSection("discord-commands")
+    }
+
 }
