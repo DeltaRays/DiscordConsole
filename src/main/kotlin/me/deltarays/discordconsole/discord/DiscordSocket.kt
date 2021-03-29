@@ -8,8 +8,10 @@ import kotlinx.coroutines.*
 import me.deltarays.discordconsole.DiscordConsole
 import me.deltarays.discordconsole.LogLevel
 import me.deltarays.discordconsole.Utils
+import me.deltarays.discordconsole.logging.LogType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.bukkit.Bukkit
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.net.URI
@@ -162,7 +164,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             when (payload.get("t").asString) {
                 "READY" -> handleReady(payload)
                 "RESUMED" -> handleResumed()
-                "MESSAGE_CREATE" -> handleMessage()
+                "MESSAGE_CREATE" -> handleMessage(payload)
             }
         } else if (op == 9) {
             val d = payload.get("d").asBoolean
@@ -217,8 +219,29 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
         )
     }
 
-    private fun handleMessage() {
-
+    private fun handleMessage(payload: JsonObject) = GlobalScope.launch(Dispatchers.IO) {
+        val d = payload.get("d").asJsonObject
+        val channelId = d.get("channel_id").asString
+        val content = d.get("content").asString.replace("\\\\\"", "\"").replace("\\\\\\\\", "\\\\");
+        val author = d.get("author").asJsonObject
+        val authorId = author.get("id").asString
+        val channel = DiscordChannel.channels.find { c ->
+            c.id == channelId
+        }
+        if (authorId == botId) return@launch
+        if (channel != null) {
+            if (channel.types.containsValue(LogType.CONSOLE)) {
+                val channelSection = plugin.getConfigManager().getChannel(channel.id)
+                val consoleSection =
+                    channelSection.getConfigurationSection("console") ?: channelSection.createSection("console")
+                if (consoleSection.getBoolean("commands-enabled", false)) {
+                    Bukkit.getScheduler().runTask(plugin, Runnable {
+                        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), content)
+                    })
+                }
+            }
+        }
+        TODO()
     }
 
     override fun onClose(code: Int, reason: String?, remote: Boolean) {
