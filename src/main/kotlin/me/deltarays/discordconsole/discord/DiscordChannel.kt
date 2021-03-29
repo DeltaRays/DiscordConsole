@@ -1,4 +1,4 @@
-package me.deltarays.discordconsole.logging
+package me.deltarays.discordconsole.discord
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -6,6 +6,7 @@ import kotlinx.coroutines.*
 import me.deltarays.discordconsole.DiscordConsole
 import me.deltarays.discordconsole.LogLevel
 import me.deltarays.discordconsole.Utils
+import me.deltarays.discordconsole.logging.LogType
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request

@@ -1,6 +1,7 @@
 package me.deltarays.discordconsole.logging
 
 import me.deltarays.discordconsole.DiscordConsole
+import me.deltarays.discordconsole.discord.DiscordChannel
 import org.apache.logging.log4j.core.LogEvent
 import org.apache.logging.log4j.core.appender.AbstractAppender
 import org.apache.logging.log4j.core.config.Property

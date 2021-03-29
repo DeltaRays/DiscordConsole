@@ -2,7 +2,7 @@ package me.deltarays.discordconsole
 
 import com.google.gson.JsonParser
 import me.deltarays.discordconsole.commands.MainCommand
-import me.deltarays.discordconsole.logging.DiscordChannel
+import me.deltarays.discordconsole.discord.DiscordChannel
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.apache.logging.log4j.LogManager

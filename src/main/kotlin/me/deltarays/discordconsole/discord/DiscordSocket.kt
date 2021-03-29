@@ -1,10 +1,13 @@
-package me.deltarays.discordconsole
+package me.deltarays.discordconsole.discord
 
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import kotlinx.coroutines.*
+import me.deltarays.discordconsole.DiscordConsole
+import me.deltarays.discordconsole.LogLevel
+import me.deltarays.discordconsole.Utils
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.java_websocket.client.WebSocketClient

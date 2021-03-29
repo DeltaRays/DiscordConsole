@@ -1,11 +1,9 @@
 package me.deltarays.discordconsole.commands
 
-import com.google.gson.JsonParser
 import me.deltarays.discordconsole.DiscordConsole
 import me.deltarays.discordconsole.LogLevel
 import me.deltarays.discordconsole.Utils
-import me.deltarays.discordconsole.logging.DiscordChannel
-import okhttp3.OkHttpClient
+import me.deltarays.discordconsole.discord.DiscordChannel
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabExecutor
@@ -13,8 +11,6 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 
 class MainCommand(private val plugin: DiscordConsole) : TabExecutor, Listener {
-    val client = OkHttpClient()
-    val parser = JsonParser()
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (listOf("rl", "reload").contains(args.getOrNull(0)?.toLowerCase())) {
