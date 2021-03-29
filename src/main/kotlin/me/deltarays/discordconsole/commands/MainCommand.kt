@@ -1,5 +1,8 @@
 package me.deltarays.discordconsole.commands
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import me.deltarays.discordconsole.DiscordConsole
 import me.deltarays.discordconsole.LogLevel
 import me.deltarays.discordconsole.Utils
@@ -45,9 +48,16 @@ class MainCommand(private val plugin: DiscordConsole) : TabExecutor, Listener {
             if (sender is Player) sender.sendMessage(Utils.tacc(plugin.getConfigManager().getPrefix() + " " + message))
             else Utils.logColored(plugin.getConfigManager().getPrefix(), message, logLevel)
         } else if (listOf("send", "sendmessage", "message").contains(args.getOrNull(0)?.toLowerCase())) {
-            val message = args.slice(1..args.size).joinToString(" ")
+            val messageArgs = args.slice(1..args.size)
             DiscordChannel.channels.forEach { channel ->
-                channel.enqueueMessage(message)
+                if (channel.name.toLowerCase() == messageArgs.getOrNull(0) || channel.id == messageArgs.getOrNull(0))
+                    channel.enqueueMessage(messageArgs.slice(1..args.size).joinToString(" "))
+            }
+        } else if (listOf("broadcast", "announce").contains(args.getOrNull(0)?.toLowerCase())) {
+            DiscordChannel.channels.forEach { channel ->
+                GlobalScope.launch(Dispatchers.IO) {
+                    channel.sendMessage(args.slice(1..args.size).joinToString(" "))
+                }
             }
         }
         return true
@@ -59,7 +69,15 @@ class MainCommand(private val plugin: DiscordConsole) : TabExecutor, Listener {
         alias: String,
         args: Array<out String>
     ): MutableList<String> {
-        if (args.size == 1) return mutableListOf("reload", "checkupdate", "sendmessage")
+        if (args.size == 1) return mutableListOf("reload", "checkupdate", "message", "broadcast")
+        else if (listOf("send", "sendmessage", "message").contains(args.getOrNull(0)?.toLowerCase())) {
+            if (args.size == 2)
+                return mutableListOf("<channel id / name>")
+            else if (args.size == 3)
+                return mutableListOf("<message>")
+        } else if (listOf("broadcast", "announce").contains(args.getOrNull(0)?.toLowerCase()))
+            if (args.size == 2)
+                return mutableListOf("<message>")
         return mutableListOf()
     }
 }
