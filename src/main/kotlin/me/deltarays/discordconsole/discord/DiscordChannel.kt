@@ -2,6 +2,7 @@ package me.deltarays.discordconsole.discord
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import kotlinx.coroutines.*
 import me.deltarays.discordconsole.DiscordConsole
 import me.deltarays.discordconsole.LogLevel
@@ -18,12 +19,19 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     private val client = OkHttpClient()
     private var queue: Queue<String> = LinkedList()
     private var canChangeTopic = false
-    var job: Job
+    private val parser = JsonParser()
+    private var sendMessageJob: Job
+    private var getDataJob: Job
+    var guild: DiscordGuild? = null
+
+    var hasData = false
+    lateinit var name: String
+    lateinit var topic: String
 
     init {
         channels.add(this)
 
-        job = GlobalScope.launch(Dispatchers.IO) {
+        sendMessageJob = GlobalScope.launch(Dispatchers.IO) {
             while (true) {
                 delay(getSendingCooldown())
                 val builder = StringBuilder()
@@ -38,6 +46,52 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                 if (builder.isNotEmpty()) sendMessage(builder.toString())
             }
         }
+        getDataJob = GlobalScope.launch(Dispatchers.IO) {
+            while (true) {
+                val request = Request.Builder()
+                    .url("$BASE_API_URL/channels/$id")
+                    .get()
+                    .addHeader("Authorization", "Bot ${plugin.getConfigManager().getBotToken()}")
+                    .addHeader("Accept", "application/json")
+                    .build()
+                val response = client.newCall(request).execute()
+                val code = response.code()
+                if (code == 404) {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cChannel with id &4$id &cdoesn't exist!",
+                        LogLevel.SEVERE
+                    )
+                    channels.remove(this@DiscordChannel)
+                } else if (code == 403) {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cThe bot doesn't have access to channel with id &4$id&c!",
+                        LogLevel.SEVERE
+                    )
+                    channels.remove(this@DiscordChannel)
+                }
+                val json = parser.parse(response.body()?.string()).asJsonObject
+                val guildId = json.get("guild_id").asString
+                guild = DiscordGuild.guilds.find { g ->
+                    g.id == guildId
+                } ?: DiscordGuild(json.get("guild_id").asString, plugin)
+                guild!!.channels.add(this@DiscordChannel)
+                hasData = true
+                name = json.get("name").asString
+                topic = json.get("topic").asString
+                response.close()
+                delay(20000)
+
+            }
+        }
+    }
+
+    fun destroy() {
+        flush()
+        getDataJob.cancel()
+        sendMessageJob.cancel()
+        channels.remove(this)
     }
 
     fun flush() {
@@ -59,7 +113,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     companion object {
         val channels = mutableListOf<DiscordChannel>()
 
-        fun initializeAll(){
+        fun initializeAll() {
             TODO("Need to make the method to init the channel")
         }
     }
@@ -88,7 +142,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                 }
                 val body = RequestBody.create(MediaType.get("application/json"), obj.toString())
                 val request = Request.Builder()
-                    .url("https://discordapp.com/api/v8/channels/$id/messages")
+                    .url("$BASE_API_URL/channels/$id/messages")
                     .post(body)
                     .addHeader("Authorization", "Bot ${plugin.getConfigManager().getBotToken()}")
                     .build()
@@ -131,7 +185,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
             }
             val body = RequestBody.create(MediaType.get("application/json"), obj.toString())
             val request = Request.Builder()
-                .url("https://discordapp.com/api/v8/channels/$id")
+                .url("$BASE_API_URL/channels/$id")
                 .patch(body)
                 .addHeader("Authorization", "Bot ${plugin.getConfigManager().getBotToken()}")
                 .build()
