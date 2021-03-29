@@ -81,6 +81,9 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                 name = json.get("name").asString
                 topic = json.get("topic").asString
                 response.close()
+                val topic = getConfigTopic()
+                if (topic != null)
+                    setTopic(Utils.convertPlaceholders(topic))
                 delay(20000)
 
             }
@@ -128,6 +131,10 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
     fun getSendingCooldown(): Long {
         return plugin.getConfigManager().getChannel(id).getLong("cooldown", 1111)
+    }
+
+    fun getConfigTopic(): String? {
+        return plugin.getConfigManager().getChannel(id).getString("topic")
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")

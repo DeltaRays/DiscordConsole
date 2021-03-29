@@ -27,6 +27,7 @@ import java.net.URI
  *  channels:
  *      'ID':
  *          refresh-rate: NUMBER
+ *          topic: 'STRING'
  *          console:
  *              format: ''
  *              commands: BOOLEAN # Whether or not messages sent in that channel get executed as console commands
