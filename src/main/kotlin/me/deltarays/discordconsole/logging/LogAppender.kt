@@ -1,6 +1,7 @@
 package me.deltarays.discordconsole.logging
 
 import me.deltarays.discordconsole.DiscordConsole
+import me.deltarays.discordconsole.Utils
 import me.deltarays.discordconsole.discord.DiscordChannel
 import org.apache.logging.log4j.core.LogEvent
 import org.apache.logging.log4j.core.appender.AbstractAppender
@@ -53,15 +54,12 @@ class LogAppender(private var plugin: DiscordConsole) :
     }
 
     private fun parse(str: String, levelName: String, message: String, threadName: String, time: Long): String {
-        str.apply {
-            replace(Regex("\\{message}", RegexOption.IGNORE_CASE), message)
-            replace(Regex("\\{level}", RegexOption.IGNORE_CASE), levelName)
-            replace(Regex("\\{thread}", RegexOption.IGNORE_CASE), threadName)
-            replace(Regex("\\{date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
+        return Utils.convertPlaceholders(str).replace(Regex("\\{message}", RegexOption.IGNORE_CASE), message)
+            .replace(Regex("\\{level}", RegexOption.IGNORE_CASE), levelName)
+            .replace(Regex("\\{thread}", RegexOption.IGNORE_CASE), threadName)
+            .replace(Regex("\\{date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
                 val dateFormat = SimpleDateFormat(e.groupValues.getOrElse(0) { "HH:mm:ss" });
                 dateFormat.format(Date(time))
             }
-        }
-        return str;
     }
 }
