@@ -64,7 +64,6 @@ import java.net.URI
 class DiscordConsole : JavaPlugin() {
     private val logger: Logger = LogManager.getRootLogger()
     private val configManager = ConfigManager(this)
-    var serverHasStartedUp = false
     private val client = OkHttpClient()
     private val parser = JsonParser()
 
@@ -98,9 +97,8 @@ class DiscordConsole : JavaPlugin() {
      * Removes the discord channels and bulk sends all remaining messages
      */
     private fun resetChannels() {
-        DiscordChannel.channels.forEachIndexed { index, discordChannel ->
-            DiscordChannel.channels.removeAt(index);
-            discordChannel.flush()
+        DiscordChannel.channels.forEachIndexed { _, discordChannel ->
+            discordChannel.destroy()
         }
     }
 
@@ -154,6 +152,7 @@ class DiscordConsole : JavaPlugin() {
             return false
         }
 
+        var serverHasStartedUp = false
     }
 
     fun checkUpdates(): Pair<LogLevel, String> {

@@ -28,7 +28,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
         fun getWSUrl(): String? {
             val client = OkHttpClient()
             val request = try {
-                (Request.Builder()).url("https://discordapp.com/api/v8/gateway?v=8&encoding=json").build()
+                (Request.Builder()).url("$BASE_API_URL/gateway?v=8&encoding=json").build()
             } catch (e: Exception) {
                 return null
             }

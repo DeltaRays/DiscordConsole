@@ -30,7 +30,7 @@ class LogAppender(private var plugin: DiscordConsole) :
             LogEvent::class.java.getMethod("getMillis").invoke(logEvt)
         } as Long
         val message = logEvt?.message?.formattedMessage as String
-        if (sendStartupMessages || plugin.serverHasStartedUp) {
+        if (sendStartupMessages || DiscordConsole.serverHasStartedUp) {
             for (channel in DiscordChannel.channels) {
                 if (channel.types.contains("CONSOLE")) {
                     val fmt: String = channel.getMessageFormat(LogType.CONSOLE)
