@@ -1,14 +1,17 @@
 package me.deltarays.discordconsole
 
 import com.google.gson.JsonParser
+import me.deltarays.discordconsole.commands.CustomCommand
 import me.deltarays.discordconsole.commands.MainCommand
 import me.deltarays.discordconsole.discord.DiscordChannel
+import me.deltarays.discordconsole.discord.DiscordGuild
 import me.deltarays.discordconsole.discord.DiscordSocket
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.bukkit.Bukkit
+import org.bukkit.command.CommandMap
 import org.bukkit.plugin.java.JavaPlugin
 import java.net.NetworkInterface
 import java.net.URI
@@ -48,6 +51,8 @@ import java.net.URI
  *
  *  commands:
  *      NAME: MESSAGE
+ *      #discordlink: https://discord.gg/WSaWztJ
+ *
  *
  *  discord commands:
  *      NAME: MESSAGE
@@ -78,8 +83,15 @@ class DiscordConsole : JavaPlugin() {
         return configManager
     }
 
+    fun exposeCommandMap() {
+        val field = Bukkit.getServer().javaClass.getDeclaredField("commandMap")
+        field.isAccessible = true
+        this.commandMap = field.get(Bukkit.getServer()) as CommandMap?
+    }
+
     override fun onLoad() {
-        resetChannels()
+        resetChannelsGuilds()
+        exposeCommandMap()
         configManager.loadConfig()
         if (hasInternetConnection()) {
             newSocket()
@@ -96,9 +108,12 @@ class DiscordConsole : JavaPlugin() {
     /**
      * Removes the discord channels and bulk sends all remaining messages
      */
-    private fun resetChannels() {
-        DiscordChannel.channels.forEachIndexed { _, discordChannel ->
-            discordChannel.destroy()
+    private fun resetChannelsGuilds() {
+        DiscordChannel.channels.forEach {
+            it.destroy()
+        }
+        for (guild in DiscordGuild.guilds) {
+            guild.destroy()
         }
     }
 
@@ -140,8 +155,11 @@ class DiscordConsole : JavaPlugin() {
 
     fun reload() {
         this.configManager.loadConfig()
+        registerCustomCommands()
+
         if (hasInternetConnection()) {
             newSocket()
+            socket.connect()
         } else {
             Utils.logColored(
                 configManager.getPrefix(),
@@ -189,6 +207,18 @@ class DiscordConsole : JavaPlugin() {
                 versions.getOrNull(0)
             }&7)"
         )
+    }
+
+    var commandMap: CommandMap? = null
+    fun registerCustomCommands() {
+        val cmdSection = configManager.getCustomCmdSection()
+        cmdSection.getKeys(false).forEach { key ->
+            val value = cmdSection.get(key).toString()
+            commandMap?.register(key, "discordconsole", CustomCommand(key, Utils.convertPlaceholders(value)))
+            Bukkit.getOnlinePlayers().forEach { player ->
+                player.updateCommands()
+            }
+        }
     }
 
 }

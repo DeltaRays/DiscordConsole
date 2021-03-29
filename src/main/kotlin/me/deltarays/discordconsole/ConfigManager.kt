@@ -61,4 +61,8 @@ class ConfigManager(plugin: DiscordConsole) {
         val channels = getChannels()
         return channels.getConfigurationSection(id) ?: channels.createSection(id)
     }
+
+    fun getCustomCmdSection(): ConfigurationSection {
+        return configuration.getConfigurationSection("commands") ?: configuration.createSection("commands")
+    }
 }
