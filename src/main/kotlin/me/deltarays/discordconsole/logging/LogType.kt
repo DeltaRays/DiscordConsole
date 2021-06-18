@@ -9,8 +9,7 @@ enum class LogType(format: String) {
     JOINS("{player} joined the server"),
     QUITS("{player} left the server"),
     CONSOLE("[{date[HH:mm:ss]}] [{thread}/{level}] {message}"),
-    DEATH(TODO()),
-    ADVANCEMENT(TODO()),
+    DEATH("{message}"),
     STARTUP(TODO()),
     SHUTDOWN(TODO());
 

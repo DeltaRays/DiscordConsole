@@ -54,6 +54,7 @@ import java.net.URI
  *          advancements:
  *              format: ''
  *              filter: REGEX
+ *          status:
  *
  *  commands:
  *      NAME: MESSAGE
@@ -138,6 +139,10 @@ class DiscordConsole : JavaPlugin() {
                 LogLevel.INFO
             )
         }
+    }
+
+    override fun onDisable() {
+        TODO("Server shutdown event")
     }
 
 
