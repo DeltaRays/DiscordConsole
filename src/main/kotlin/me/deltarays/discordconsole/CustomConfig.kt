@@ -10,6 +10,7 @@ import org.bukkit.configuration.file.YamlConfiguration
  */
 class CustomConfig : YamlConfiguration() {
     private var comments: Int = 0
+    private var raws : Int = 0
 
     /**
      * Saves the yaml (with comments) to a string
@@ -19,7 +20,10 @@ class CustomConfig : YamlConfiguration() {
         val str = super.saveToString()
         val builder = StringBuilder()
         str.split("\n").forEach { line ->
-            builder.append(line.replaceFirst(Regex("cmt_\\d+!\\s*:"), "#") + "\n")
+            builder.append(line
+                .replaceFirst(Regex("cmt_\\d+!\\s*:"), "#")
+                .replaceFirst(Regex("raw_\\d+!\\s*:"), ""))
+            builder.append("\n")
         }
         return builder.toString()
     }
@@ -37,6 +41,31 @@ class CustomConfig : YamlConfiguration() {
         }
         super.set(path, value)
     }
+
+    /**
+     * Add a comment to the configuration
+     */
+    fun addComment(comment: String) {
+        super.set(String.format("cmt_%s!", this.comments), comment)
+        this.comments++
+    }
+
+
+    /**
+     * Add comments to the configuration
+     */
+    fun addComments(comments: List<String>) {
+        comments.forEach { comment ->
+            super.set(String.format("cmt_%s!", this.comments), comment)
+            this.comments++
+        }
+    }
+
+    fun addRaw(text: String){
+        super.set(String.format("raw_%s!", this.raws), text)
+        this.raws++
+    }
+
 
     /**
      * Set a path to something and add a comment before said path
