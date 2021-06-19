@@ -32,29 +32,38 @@ import java.net.URI
  *          refresh-rate: NUMBER
  *          topic: 'STRING'
  *          console:
+ *              active: true
  *              format: ''
  *              commands-enabled: BOOLEAN # Whether or not messages sent in that channel get executed as console commands
  *              send-startup: BOOLEAN # Whether or not to send startup messages
  *              filter: REGEX
  *          chat:
+ *              active: true
  *              format: ''
  *              filter: REGEX
  *              discord-minecraft:
  *                  enabled: BOOLEAN # Whether or not anything sent in that channel will be sent as a chat message
  *                  format: ''
  *          joins:
+ *              active: true
  *              format: ''
  *              filter: REGEX
  *          quits:
+ *              active: true
  *              format: ''
  *              filter: REGEX
  *          deaths:
+ *              active: true
  *              format: ''
  *              filter: REGEX
  *          advancements:
+ *              active: true
  *              format: ''
  *              filter: REGEX
  *          status:
+ *              active: true
+ *              startup: "The server has started up!"
+ *              shutdown: "The server has stopped!"
  *
  *  commands:
  *      NAME: MESSAGE
@@ -100,20 +109,11 @@ class DiscordConsole : JavaPlugin() {
         resetChannelsGuilds()
         exposeCommandMap()
         configManager.loadConfig()
-        if (hasInternetConnection()) {
-            newSocket()
-            socket.connect()
-        } else {
-            Utils.logColored(
-                configManager.getPrefix(),
-                "&4The plugin requires an internet connection to work!",
-                LogLevel.SEVERE
-            )
-        }
+        reload()
     }
 
     /**
-     * Removes the discord channels and bulk sends all remaining messages
+     * Removes the discord channels, bulk sends all remaining messages and re initializes the channels
      */
     private fun resetChannelsGuilds() {
         DiscordChannel.channels.forEach {
@@ -122,6 +122,7 @@ class DiscordConsole : JavaPlugin() {
         for (guild in DiscordGuild.guilds) {
             guild.destroy()
         }
+        DiscordChannel.initializeAll(this)
     }
 
     override fun onEnable() {
@@ -167,7 +168,7 @@ class DiscordConsole : JavaPlugin() {
     fun reload() {
         this.configManager.loadConfig()
         registerCustomCommands()
-
+        resetChannelsGuilds()
         if (hasInternetConnection()) {
             newSocket()
             socket.connect()

@@ -32,7 +32,7 @@ class LogAppender(private var plugin: DiscordConsole) :
         } as Long
         val message = logEvt?.message?.formattedMessage as String
         for (channel in DiscordChannel.channels) {
-            if (channel.types.contains("CONSOLE")) {
+            if (channel.types.contains(LogType.CONSOLE)) {
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val consoleSection =
                     channelSection.getConfigurationSection("console") ?: channelSection.createSection("console")

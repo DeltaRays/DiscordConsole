@@ -10,8 +10,7 @@ enum class LogType(format: String) {
     QUITS("{player} left the server"),
     CONSOLE("[{date[HH:mm:ss]}] [{thread}/{level}] {message}"),
     DEATH("{message}"),
-    STARTUP(TODO()),
-    SHUTDOWN(TODO());
+    STATUS(TODO());
 
     val defaultFormat: String = format;
 

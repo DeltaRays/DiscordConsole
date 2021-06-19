@@ -48,7 +48,7 @@ class ConfigManager(plugin: DiscordConsole) {
     /**
      * Gets the ConfigurationSection containing the channels.
      */
-    private fun getChannels(): ConfigurationSection {
+    fun getChannels(): ConfigurationSection {
         var section = configuration.getConfigurationSection("channels")
         if (section == null) section = configuration.createSection("channels")
         return section

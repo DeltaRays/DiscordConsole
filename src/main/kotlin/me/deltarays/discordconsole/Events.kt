@@ -41,7 +41,7 @@ TODO("Server startup")
     fun chat(evt: AsyncPlayerChatEvent) {
 
         for (channel in DiscordChannel.channels) {
-            if (channel.types.containsValue(LogType.CHAT)) {
+            if (channel.types.contains(LogType.CHAT)) {
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val chatSection = channelSection.getConfigurationSection("chat") ?: channelSection.createSection("chat")
                 val chatFormat = channel.getMessageFormat(LogType.CHAT)
@@ -66,7 +66,7 @@ TODO("Server startup")
                 p.sendMessage(Utils.tacc(plugin.checkUpdates().second))
         }
         for (channel in DiscordChannel.channels) {
-            if (channel.types.contains("JOINS")) {
+            if (channel.types.contains(LogType.JOINS)) {
                 val fmt: String = channel.getMessageFormat(LogType.JOINS)
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val joinSection =
@@ -86,7 +86,7 @@ TODO("Server startup")
     fun quits(evt: PlayerQuitEvent) {
         val p = evt.player
         for (channel in DiscordChannel.channels) {
-            if (channel.types.contains("QUITS")) {
+            if (channel.types.contains(LogType.QUITS)) {
                 val fmt: String = channel.getMessageFormat(LogType.QUITS)
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val quitSection =
@@ -106,7 +106,7 @@ TODO("Server startup")
     fun deaths(evt: PlayerDeathEvent) {
         val p = evt.entity
         for (channel in DiscordChannel.channels) {
-            if (channel.types.contains("DEATH")) {
+            if (channel.types.contains(LogType.DEATH)) {
                 val fmt: String = channel.getMessageFormat(LogType.DEATH)
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val quitSection =

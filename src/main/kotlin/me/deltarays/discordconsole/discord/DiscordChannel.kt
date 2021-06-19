@@ -15,7 +15,7 @@ import okhttp3.RequestBody
 import java.util.*
 
 
-class DiscordChannel(val id: String, private val plugin: DiscordConsole, var types: HashMap<String, LogType>) {
+class DiscordChannel(val id: String, private val plugin: DiscordConsole, var types: MutableSet<LogType>) {
     private val client = OkHttpClient()
     private var queue: Queue<String> = LinkedList()
     private var canChangeTopic = false
@@ -116,8 +116,23 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     companion object {
         val channels = mutableListOf<DiscordChannel>()
         private val client = OkHttpClient()
-        fun initializeAll() {
-            TODO("Need to make the method to init the channel")
+        fun initializeAll(plugin: DiscordConsole) {
+            val configManager = plugin.getConfigManager()
+            val channels = configManager.getChannels()
+            // Loops through all the channels
+            channels.getKeys(false).forEach { channelId ->
+                val channel = configManager.getChannel(channelId)
+                val keys = mutableSetOf<LogType>()
+                // Loops through the log types of all channels and adds the right ones to the list
+                for (logType in channel.getKeys(false)) {
+                    val logSection = channel.getConfigurationSection(logType) ?: continue
+                    val isActive = logSection.getBoolean("active", false)
+                    if (!isActive) continue
+                    keys.add(LogType.valueOf(logType))
+                }
+                DiscordChannel(channelId, plugin, keys)
+            }
+
         }
 
         fun sendMessage(channelId: String, botToken: String, message: String): Deferred<Int> =

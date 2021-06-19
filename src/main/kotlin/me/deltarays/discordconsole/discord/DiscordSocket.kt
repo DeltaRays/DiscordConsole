@@ -233,7 +233,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
         if (authorId == botId) return@launch
         val member = d.get("member").asJsonObject
         if (channel != null) {
-            if (channel.types.containsValue(LogType.CHAT)) {
+            if (channel.types.contains(LogType.CHAT)) {
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val chatSection = channelSection.getConfigurationSection("chat") ?: channelSection.createSection("chat")
                 val discordMinecraftSection = chatSection.getConfigurationSection("minecraft-discord")
@@ -251,7 +251,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                         }
                     Bukkit.broadcastMessage(parsed)
                 }
-            } else if (channel.types.containsValue(LogType.CONSOLE)) {
+            } else if (channel.types.contains(LogType.CONSOLE)) {
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val consoleSection =
                     channelSection.getConfigurationSection("console") ?: channelSection.createSection("console")
