@@ -21,84 +21,80 @@ class ConfigManager(plugin: DiscordConsole) {
     fun loadConfig() {
         if (!configFile.exists()) {
             configFile.parentFile.mkdirs()
-            setConfigurationDefaults()
             DiscordConsole.isFirstLoad = true
         }
         configFile.createNewFile()
         configuration = CustomConfig()
         configuration.load(configFile)
+        if(DiscordConsole.isFirstLoad){
+            setConfigurationDefaults()
+            saveConfig()
+        }
+    }
+
+    fun saveConfig(){
+        configuration.save(configFile)
     }
 
     fun setConfigurationDefaults() {
-        configuration.set(
-            "bot.token",
-            "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-            "The discord bot's token"
-        )
-        configuration.set("bot.status", "online", "The bot's status (online, dnd, idle, invisible)")
-        configuration.set("bot.activity.name", "on minecraft", "The name of the bot's status")
-        configuration.set(
-            "bot.activity.type",
-            "playing",
-            "The type of the bot's status (game, listening, watching, etc.)"
-        )
-        configuration.set("prefix", "&7[&6DiscordConsole&7]", "The plugin's console prefix")
-        configuration.set("check-updates", true, "Whether the server should check for updates")
-
-        configuration.addRaw(
-            "channels:\n" +
-                    "    'ID':\n" +
-                    "        refresh-rate: NUMBER\n" +
-                    "        topic: 'STRING'\n" +
-                    "        console:\n" +
-                    "            active: true\n" +
-                    "            format: ''\n" +
-                    "            commands-enabled: BOOLEAN # Whether or not messages sent in that channel get executed as console commands\n" +
-                    "            send-startup: BOOLEAN # Whether or not to send startup messages\n" +
-                    "            filter: REGEX\n" +
-                    "        chat:\n" +
-                    "            active: true\n" +
-                    "            format: ''\n" +
-                    "            filter: REGEX\n" +
-                    "            discord-minecraft:\n" +
-                    "                enabled: BOOLEAN # Whether or not anything sent in that channel will be sent as a chat message\n" +
-                    "                format: ''\n" +
-                    "        joins:\n" +
-                    "            active: true\n" +
-                    "            format: ''\n" +
-                    "            filter: REGEX\n" +
-                    "        quits:\n" +
-                    "            active: true\n" +
-                    "            format: ''\n" +
-                    "            filter: REGEX\n" +
-                    "        deaths:\n" +
-                    "            active: true\n" +
-                    "            format: ''\n" +
-                    "            filter: REGEX\n" +
-                    "        startup:\n" +
-                    "            active: true\n" +
-                    "            format: \"The server has started up!\"\n" +
-                    "        shutdown:\n" +
-                    "            active: true\n" +
-                    "            format: \"The server has stopped!\"" +
-                    "\n\n\n"
-        )
-
-        configuration.addRaw(
-            "commands:\n" +
-                    "    #Structured like NAME: MESSAGE\n" +
-                    "    discordlink: \"https://discord.gg/WSaWztJ\"\n" +
-                    "\n\n" +
-                    "discord-commands:\n" +
-                    "    NAME: MESSAGE" +
-                    "\n\n"
+        configuration.addRaw(0,
+            "bot:\n" +
+                "    token: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n" +
+                "    status: online # The bot's status (online, dnd, idle, invisible)\n" +
+                "    activity:\n" +
+                "        name: STRING # The name of the bot's status\n" +
+                "        type: playing # The type of the bot's status (game, listening, watching, etc.)\n" +
+                "\n" +
+                "prefix: \"&7[&6DiscordConsole&7]\" # The plugin's console prefix\n" +
+                "check-updates: true # Whether the server should check for updates\n" +
+                "channels:\n" +
+                "    'ID': # The channel's id\n" +
+                "        refresh-rate: 1000 # Every how many milliseconds messages should be sent\n" +
+                "        topic: 'Console channel' # The channel's topic\n" +
+                "        console:\n" +
+                "            active: true\n" +
+                "            format: '[{date[HH:mm:ss]}] [{thread}/{level}] {message}' # How the console messages are structured\n" +
+                "            commands-enabled: true # Whether or not messages sent in that channel get executed as console commands\n" +
+                "            send-startup: true # Whether or not to send startup messages\n" +
+                "           filter: '' # The regular expression to filter each message\n" +
+                "       chat:\n" +
+                "           active: false\n" +
+                "           format: '{player}: {message}'\n" +
+                "           filter: '' # The regular expression to filter each message\n" +
+                "           minecraft-discord:\n" +
+                "               enabled: BOOLEAN # Whether or not anything sent in that channel will be sent as a chat message\n" +
+                "               format: ''\n" +
+                "       joins:\n" +
+                "           active: false\n" +
+                "           format: '{player} joined the server'\n" +
+                "           filter: '' # The regular expression to filter each message\n" +
+                "       quits:\n" +
+                "           active: false\n" +
+                "           format: '{player} left the server'\n" +
+                "           filter: '' # The regular expression to filter each message\n" +
+                "       deaths:\n" +
+                "           active: false\n" +
+                "           format: '{message}'\n" +
+                "           filter: '' # The regular expression to filter each message\n" +
+                "       startup:\n" +
+                "           active: true\n" +
+                "           format: \"The server has started up!\"\n" +
+                "       shutdown:\n" +
+                "           active: true\n" +
+                "           format: \"The server has stopped!\"\n" +
+                "\n" +
+                "commands:\n" +
+                "    #NAME: MESSAGE\n" +
+                "    discordlink: https://discord.gg/WSaWztJ\n" +
+                "\n" +
+                "\n" +
+                "discord-commands:\n" +
+                "     #NAME: MESSAGE\n" +
+                "\n" +
+                "debug: BOOLEAN"
         )
 
-        configuration.set(
-            "debug",
-            true,
-            "Whether the server should send messages (useful if something doesn't work and the developer needs more information)"
-        )
+
 
     }
 

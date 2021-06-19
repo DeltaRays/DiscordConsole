@@ -10,7 +10,7 @@ import org.bukkit.configuration.file.YamlConfiguration
  */
 class CustomConfig : YamlConfiguration() {
     private var comments: Int = 0
-    private var raws : Int = 0
+    private var rawText = mutableMapOf<Int, String>()
 
     /**
      * Saves the yaml (with comments) to a string
@@ -19,11 +19,13 @@ class CustomConfig : YamlConfiguration() {
     override fun saveToString(): String {
         val str = super.saveToString()
         val builder = StringBuilder()
-        str.split("\n").forEach { line ->
-            builder.append(line
-                .replaceFirst(Regex("cmt_\\d+!\\s*:"), "#")
-                .replaceFirst(Regex("raw_\\d+!\\s*:"), ""))
-            builder.append("\n")
+        str.split("\n").forEachIndexed { index, line ->
+            if (rawText.containsKey(index))
+                builder.append(rawText.get(index)).append("\n")
+            builder.append(
+                line
+                    .replaceFirst(Regex("cmt_\\d+!\\s*:"), "#")
+            ).append("\n")
         }
         return builder.toString()
     }
@@ -61,9 +63,8 @@ class CustomConfig : YamlConfiguration() {
         }
     }
 
-    fun addRaw(text: String){
-        super.set(String.format("raw_%s!", this.raws), text)
-        this.raws++
+    fun addRaw(index: Int, text: String) {
+        rawText.put(index, text)
     }
 
 
@@ -97,7 +98,6 @@ class CustomConfig : YamlConfiguration() {
             } else builder.append(line)
             builder.append("\n")
         }
-        println(builder.toString())
         comments = 0
         return builder.toString()
     }

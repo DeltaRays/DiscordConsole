@@ -43,7 +43,7 @@ import java.util.regex.Pattern
  *              active: true
  *              format: ''
  *              filter: REGEX
- *              discord-minecraft:
+ *              minecraft-discord:
  *                  enabled: BOOLEAN # Whether or not anything sent in that channel will be sent as a chat message
  *                  format: ''
  *          joins:
@@ -106,9 +106,9 @@ class DiscordConsole : JavaPlugin() {
     }
 
     override fun onLoad() {
+        configManager.loadConfig()
         resetChannelsGuilds()
         exposeCommandMap()
-        configManager.loadConfig()
         reload()
     }
 
@@ -158,6 +158,7 @@ class DiscordConsole : JavaPlugin() {
                 channel.enqueueMessage(formatted)
             }
         }
+        configManager.saveConfig()
     }
 
 

@@ -5,7 +5,9 @@ plugins {
 }
 
 group "me.deltarays"
-version "1.4"
+
+val VERSION = "1.4.0"
+version = VERSION
 
 repositories {
     mavenCentral()
@@ -33,6 +35,10 @@ dependencies {
 
 
 tasks {
+
+    shadowJar {
+        archiveFileName.set("DiscordConsole-$VERSION.jar")
+    }
     build {
         dependsOn(shadowJar)
     }
