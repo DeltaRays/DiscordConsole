@@ -6,6 +6,7 @@ import me.deltarays.discordconsole.commands.MainCommand
 import me.deltarays.discordconsole.discord.DiscordChannel
 import me.deltarays.discordconsole.discord.DiscordGuild
 import me.deltarays.discordconsole.discord.DiscordSocket
+import me.deltarays.discordconsole.logging.LogType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.apache.logging.log4j.LogManager
@@ -15,6 +16,7 @@ import org.bukkit.command.CommandMap
 import org.bukkit.plugin.java.JavaPlugin
 import java.net.NetworkInterface
 import java.net.URI
+import java.util.regex.Pattern
 
 /**
  * ```yaml
@@ -56,14 +58,12 @@ import java.net.URI
  *              active: true
  *              format: ''
  *              filter: REGEX
- *          advancements:
+ *          startup:
  *              active: true
- *              format: ''
- *              filter: REGEX
- *          status:
+ *              format: "The server has started up!"
+ *          shutdown:
  *              active: true
- *              startup: "The server has started up!"
- *              shutdown: "The server has stopped!"
+ *              format: "The server has stopped!"
  *
  *  commands:
  *      NAME: MESSAGE
@@ -143,7 +143,21 @@ class DiscordConsole : JavaPlugin() {
     }
 
     override fun onDisable() {
-        TODO("Server shutdown event")
+        for (channel in DiscordChannel.channels) {
+            if (channel.types.contains(LogType.SHUTDOWN)) {
+                val fmt: String = channel.getMessageFormat(LogType.SHUTDOWN)
+                val channelSection = configManager.getChannel(channel.id)
+                val shutdownSection =
+                    channelSection.getConfigurationSection("shutdown") ?: channelSection.createSection("shutdown")
+                val formatted = Utils.convertPlaceholders(fmt)
+                val filterStr = shutdownSection.getString("filter") ?: ""
+                if (filterStr.isNotEmpty()) {
+                    val filter = Pattern.compile(filterStr)
+                    if (!filter.matcher(formatted).find()) continue
+                }
+                channel.enqueueMessage(formatted)
+            }
+        }
     }
 
 

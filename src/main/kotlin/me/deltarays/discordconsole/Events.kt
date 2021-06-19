@@ -10,7 +10,6 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.AsyncPlayerChatEvent
-import org.bukkit.event.player.PlayerAdvancementDoneEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.server.ServerLoadEvent
@@ -22,7 +21,22 @@ class Events(private val plugin: DiscordConsole) : Listener {
     @EventHandler
     fun serverStartup(evt: ServerLoadEvent) {
         DiscordConsole.serverHasStartedUp = true
-TODO("Server startup")
+
+        for (channel in DiscordChannel.channels) {
+            if (channel.types.contains(LogType.STARTUP)) {
+                val fmt: String = channel.getMessageFormat(LogType.STARTUP)
+                val channelSection = plugin.getConfigManager().getChannel(channel.id)
+                val startupSection =
+                    channelSection.getConfigurationSection("startup") ?: channelSection.createSection("startup")
+                val formatted = Utils.convertPlaceholders(fmt)
+                val filterStr = startupSection.getString("filter") ?: ""
+                if (filterStr.isNotEmpty()) {
+                    val filter = Pattern.compile(filterStr)
+                    if (!filter.matcher(formatted).find()) continue
+                }
+                channel.enqueueMessage(formatted)
+            }
+        }
     }
 
 
@@ -109,11 +123,11 @@ TODO("Server startup")
             if (channel.types.contains(LogType.DEATH)) {
                 val fmt: String = channel.getMessageFormat(LogType.DEATH)
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
-                val quitSection =
+                val deathSection =
                     channelSection.getConfigurationSection("death") ?: channelSection.createSection("death")
                 val formatted = Utils.convertPlaceholders(fmt, p).replace(Regex("\\{player}", RegexOption.IGNORE_CASE), p.name)
                     .replace(Regex("\\{message}", RegexOption.IGNORE_CASE), evt.deathMessage ?: "")
-                val filterStr = quitSection.getString("filter") ?: ""
+                val filterStr = deathSection.getString("filter") ?: ""
                 if (filterStr.isNotEmpty()) {
                     val filter = Pattern.compile(filterStr)
                     if (!filter.matcher(formatted).find()) continue
