@@ -74,13 +74,16 @@ object Utils {
                 put("guild_name", guild.name)
                 put("guild_id", guild.id)
                 put("guild_members", guild.memberCount.toString())
-                put("guild_description", guild.description)
+                put("guild_description", guild.description ?: "")
             }
             if (memberUser != null) {
-                put("member_nickname", memberUser.first.get("nick").asString)
-                put("member_joined_at", Date(memberUser.first.get("joined_at").asLong).toString())
+                println("EFOKGOEKGEK")
+                val username = memberUser.second.get("username").asString
+                val memberNick =
+                    if (!memberUser.first.has("nick")) username else memberUser.first.get("nick").asString
+                put("member_nickname", memberNick)
                 put("member_id", memberUser.second.get("id").asString)
-                put("member_username", memberUser.second.get("username").asString)
+                put("member_username", username)
             }
         }
 

@@ -5,41 +5,51 @@ bot:
     name: Minecraft # The name of the bot's status
     type: playing # The type of the bot's status (game, listening, watching, etc.)
 
+# The plugin's console prefix
+prefix: "&7[&6DiscordConsole&7]"
 
-prefix: "&7[&6DiscordConsole&7]" # The plugin's console prefix
-check-updates: true # Whether the server should check for updates
+# Whether the server should check for updates
+check-updates: true
 
 
-
-channels: # The discord channels
-  'ID': # The channel's id
-    refresh-rate: 1000 # Every how many milliseconds messages should be sent
-    topic: 'Console channel' # The channel's topic
+# The discord channels
+channels:
+  # The channel's id
+  'ID':
+    # Every how many milliseconds messages should be sent
+    refresh-rate: 1000
+    # The channel's topic
+    topic: 'Console channel'
     console:
       active: true
-      format: '[{date[HH:mm:ss]}] [{thread}/{level}] {message}' # How the console messages are structured
-      commands-enabled: true # Whether or not messages sent in that channel get executed as console commands
-      send-startup: true # Whether or not to send startup messages
-      filter: '' # The regular expression to filter each message
+      # How the console messages are structured
+      format: '[{date[HH:mm:ss]}] [{thread}/{level}] {message}'
+      # Whether or not messages sent in that channel get executed as console commands
+      commands-enabled: true
+      # Whether or not to send startup messages
+      send-startup: true
+      # The regular expression to filter each message, can be used to make it so only messages containing specific strings get sent
+      filter: ''
     chat:
       active: false
       format: '{player}: {message}'
-      filter: '' # The regular expression to filter each message, can be used to make it so only messages containing specific strings get sent
+      filter: ''
       minecraft-discord:
-        enabled: false # Whether or not anything sent in that channel will be broadcast to minecraft
+        # Whether or not anything sent in that channel will be broadcast to minecraft
+        enabled: false
         format: '[DISCORD] {member_nickname} > {message}'
     joins:
       active: false
       format: '{player} joined the server'
-      filter: '' # The regular expression to filter each message, can be used to make it so only messages containing specific strings get sent
+      filter: ''
     quits:
       active: false
       format: '{player} left the server'
-      filter: '' # The regular expression to filter each message, can be used to make it so only messages containing specific strings get sent
+      filter: ''
     deaths:
       active: false
       format: '{message}'
-      filter: '' # The regular expression to filter each message, can be used to make it so only messages containing specific strings get sent
+      filter: ''
     startup:
       active: true
       format: "The server has started up!"
@@ -49,11 +59,13 @@ channels: # The discord channels
 
 
 
-commands: # The minecraft commands, formatted like NAME: MESSAGE
+commands:
+  # The discord commands, the key is the name of the command, and the value is the message to return
   discordlink: https://discord.gg/WSaWztJ
 
 
 
-discord-commands: # The discord commands, formatted like NAME: MESSAGE
+discord-commands:
+  # The discord commands, the key is the name of the command, and the value is the message to return
   "!ip": "<server ip>"
 debug: BOOLEAN

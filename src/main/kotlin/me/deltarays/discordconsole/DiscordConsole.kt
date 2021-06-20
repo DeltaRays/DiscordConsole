@@ -4,13 +4,13 @@ import com.google.gson.JsonParser
 import me.deltarays.discordconsole.commands.CustomCommand
 import me.deltarays.discordconsole.commands.MainCommand
 import me.deltarays.discordconsole.discord.DiscordChannel
-import me.deltarays.discordconsole.discord.DiscordGuild
 import me.deltarays.discordconsole.discord.DiscordSocket
+import me.deltarays.discordconsole.logging.LogAppender
 import me.deltarays.discordconsole.logging.LogType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.core.Logger
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandMap
 import org.bukkit.plugin.java.JavaPlugin
@@ -18,72 +18,13 @@ import java.net.NetworkInterface
 import java.net.URI
 import java.util.regex.Pattern
 
-/**
- * ```yaml
- *  bot:
- *      token: BOTTOKEN
- *      status: online | dnd | invisible
- *      activity:
- *          name: STRING
- *          type: playing | other stuff
- *
- *  prefix: "&7[&6DiscordConsole&7]"
- *  check-updates: BOOLEAN
- *  channels:
- *      'ID':
- *          refresh-rate: NUMBER
- *          topic: 'STRING'
- *          console:
- *              active: true
- *              format: ''
- *              commands-enabled: BOOLEAN # Whether or not messages sent in that channel get executed as console commands
- *              send-startup: BOOLEAN # Whether or not to send startup messages
- *              filter: REGEX
- *          chat:
- *              active: true
- *              format: ''
- *              filter: REGEX
- *              minecraft-discord:
- *                  enabled: BOOLEAN # Whether or not anything sent in that channel will be sent as a chat message
- *                  format: ''
- *          joins:
- *              active: true
- *              format: ''
- *              filter: REGEX
- *          quits:
- *              active: true
- *              format: ''
- *              filter: REGEX
- *          deaths:
- *              active: true
- *              format: ''
- *              filter: REGEX
- *          startup:
- *              active: true
- *              format: "The server has started up!"
- *          shutdown:
- *              active: true
- *              format: "The server has stopped!"
- *
- *  commands:
- *      NAME: MESSAGE
- *      #discordlink: https://discord.gg/WSaWztJ
- *
- *
- *  discord-commands:
- *      NAME: MESSAGE
- *
- *  debug: BOOLEAN
- * ```
- */
-
 
 /**
  * The main class of the DiscordConsole plugin
  * @author DeltaRays
  */
 class DiscordConsole : JavaPlugin() {
-    private val logger: Logger = LogManager.getRootLogger()
+    private val logger: Logger = LogManager.getRootLogger() as Logger
     private val configManager = ConfigManager(this)
     private val client = OkHttpClient()
     private val parser = JsonParser()
@@ -107,23 +48,12 @@ class DiscordConsole : JavaPlugin() {
 
     override fun onLoad() {
         configManager.loadConfig()
-        resetChannelsGuilds()
         exposeCommandMap()
+
         reload()
+        configManager.saveConfig()
     }
 
-    /**
-     * Removes the discord channels, bulk sends all remaining messages and re initializes the channels
-     */
-    private fun resetChannelsGuilds() {
-        DiscordChannel.channels.forEach {
-            it.destroy()
-        }
-        for (guild in DiscordGuild.guilds) {
-            guild.destroy()
-        }
-        DiscordChannel.initializeAll(this)
-    }
 
     override fun onEnable() {
         Bukkit.getPluginManager().registerEvents(Events(this), this)
@@ -183,7 +113,10 @@ class DiscordConsole : JavaPlugin() {
     fun reload() {
         this.configManager.loadConfig()
         registerCustomCommands()
-        resetChannelsGuilds()
+        DiscordChannel.resetChannelsGuilds(this)
+        if (!LogAppender.isAttached) {
+            logger.addAppender(LogAppender(this))
+        }
         if (hasInternetConnection()) {
             newSocket()
             socket.connect()
@@ -240,10 +173,12 @@ class DiscordConsole : JavaPlugin() {
     fun registerCustomCommands() {
         val cmdSection = configManager.getCustomCmdSection()
         cmdSection.getKeys(false).forEach { key ->
-            val value = cmdSection.get(key).toString()
-            commandMap?.register(key, "discordconsole", CustomCommand(key, value))
-            Bukkit.getOnlinePlayers().forEach { player ->
-                player.updateCommands()
+            if (!key.startsWith("cmt_")) {
+                val value = cmdSection.get(key).toString()
+                commandMap?.register(key, "discordconsole", CustomCommand(key, value))
+                Bukkit.getOnlinePlayers().forEach { player ->
+                    player.updateCommands()
+                }
             }
         }
     }

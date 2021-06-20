@@ -15,7 +15,9 @@ import org.bukkit.Bukkit
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.net.URI
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.ceil
 
@@ -135,6 +137,9 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                                             activityNameToInt(activitySection.getString("type", "game"))
                                         )
                                         for (key in activitySection.getKeys(false)) {
+                                            if (key.startsWith("cmt_")) {
+                                                continue
+                                            }
                                             if (!listOf("name", "type").contains(key)) {
                                                 if (activitySection.isString(key))
                                                     addProperty(key, activitySection.getString("key"))
@@ -211,6 +216,9 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             "&a[Discord Connection] Successfully connected!",
             LogLevel.INFO
         )
+        for (channel in DiscordChannel.channels) {
+            channel.initializeJobs()
+        }
     }
 
     private fun handleResumed() {
@@ -239,7 +247,8 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                 val discordMinecraftSection = chatSection.getConfigurationSection("minecraft-discord")
                     ?: chatSection.createSection("minecraft-discord")
                 if (discordMinecraftSection.getBoolean("enabled", false)) {
-                    val format = discordMinecraftSection.getString("format", "[DISCORD] {member_nickname} > {message}")!!
+                    val format =
+                        discordMinecraftSection.getString("format", "[DISCORD] {member_nickname} > {message}")!!
                     val parsed = Utils.convertPlaceholders(
                         format,
                         channel = channel,
@@ -247,9 +256,16 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                         memberUser = Pair(member, author)
                     )
                         .replace(Regex("\\{date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
-                            val dateFormat = SimpleDateFormat(e.groupValues.getOrElse(0) { "HH:mm:ss" });
-                            dateFormat.format(Date())
+                            val dateFormat = DateTimeFormatter.ofPattern(e.groupValues.getOrElse(1) { "hh:mm:ss" })
+                            dateFormat.format(Instant.ofEpochMilli(Date().time).atOffset(ZoneOffset.UTC))
                         }.replace(Regex("\\{message}", RegexOption.IGNORE_CASE), content)
+                        .replace(Regex("\\{member_join_date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
+                            val dateFormat = DateTimeFormatter.ofPattern(e.groupValues.getOrElse(1) { "hh:mm:ss" })
+                            dateFormat.format(
+                                Instant.ofEpochMilli(Date.parse(member.get("joined_at").asString))
+                                    .atOffset(ZoneOffset.UTC)
+                            )
+                        }
                     Bukkit.broadcastMessage(parsed)
                 }
             } else if (channel.types.contains(LogType.CONSOLE)) {
@@ -266,6 +282,9 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
         }
         val discordCommandSection = plugin.getConfigManager().getCustomDiscordCmdSection()
         for (key in discordCommandSection.getKeys(false)) {
+            if (key.startsWith("cmt_")) {
+                continue
+            }
             if (content.startsWith(key)) {
                 val code = DiscordChannel.sendMessage(
                     channelId,
@@ -273,7 +292,13 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                     Utils.convertPlaceholders(
                         discordCommandSection.get(key).toString(),
                         memberUser = Pair(member, author)
-                    )
+                    ).replace(Regex("\\{member_join_date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
+                        val dateFormat = DateTimeFormatter.ofPattern(e.groupValues.getOrElse(1) { "hh:mm:ss" })
+                        dateFormat.format(
+                            Instant.ofEpochMilli(Date.parse(member.get("joined_at").asString))
+                                .atOffset(ZoneOffset.UTC)
+                        )
+                    }
                 ).await()
                 if (code == 403) {
                     Utils.logColored(

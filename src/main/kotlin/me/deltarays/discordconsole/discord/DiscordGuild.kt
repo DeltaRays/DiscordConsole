@@ -18,8 +18,9 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
     var hasData = false
     lateinit var name: String;
     var memberCount: Int? = null; // approximate_member_count in json
-    lateinit var description: String;
+    var description: String? = null;
 
+    @Synchronized
     fun destroy() {
         getDataJob.cancel()
         guilds.remove(this)
@@ -64,7 +65,7 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
                 response.close()
                 hasData = true
                 name = json.get("name").asString
-                description = json.get("description").asString
+                description = if (json.get("description").isJsonNull) null else json.get("description").asString
                 memberCount = json.get("approximate_member_count").asInt
                 delay(20000)
             }

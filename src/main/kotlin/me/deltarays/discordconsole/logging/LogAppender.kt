@@ -5,15 +5,21 @@ import me.deltarays.discordconsole.Utils
 import me.deltarays.discordconsole.discord.DiscordChannel
 import org.apache.logging.log4j.core.LogEvent
 import org.apache.logging.log4j.core.appender.AbstractAppender
-import org.apache.logging.log4j.core.config.Property
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.regex.Pattern
 
 class LogAppender(private var plugin: DiscordConsole) :
-    AbstractAppender("DiscordConsoleAppender", null, null, false, Property.EMPTY_ARRAY) {
+    AbstractAppender("DiscordConsoleAppender", null, null, false) {
+    init {
+        isAttached = true
+        this.start()
+    }
+
     override fun append(event: LogEvent?) {
-        val logEvt: LogEvent?;
+        val logEvt: LogEvent?
         val method = try {
             LogEvent::class.java.getMethod("toImmutable")
         } catch (e: NoSuchMethodException) {
@@ -53,13 +59,17 @@ class LogAppender(private var plugin: DiscordConsole) :
         }
     }
 
+    companion object {
+        var isAttached = false
+    }
+
     private fun parse(str: String, levelName: String, message: String, threadName: String, time: Long): String {
         return Utils.convertPlaceholders(str).replace(Regex("\\{message}", RegexOption.IGNORE_CASE), message)
-            .replace(Regex("\\{log_level}", RegexOption.IGNORE_CASE), levelName)
-            .replace(Regex("\\{log_thread}", RegexOption.IGNORE_CASE), threadName)
+            .replace(Regex("\\{level}", RegexOption.IGNORE_CASE), levelName)
+            .replace(Regex("\\{thread}", RegexOption.IGNORE_CASE), threadName)
             .replace(Regex("\\{date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
-                val dateFormat = SimpleDateFormat(e.groupValues.getOrElse(0) { "HH:mm:ss" });
-                dateFormat.format(Date(time))
+                val dateFormat = DateTimeFormatter.ofPattern(e.groupValues.getOrElse(1) { "hh:mm:ss" })
+                dateFormat.format(Instant.ofEpochMilli(time).atOffset(ZoneOffset.UTC))
             }
     }
 }

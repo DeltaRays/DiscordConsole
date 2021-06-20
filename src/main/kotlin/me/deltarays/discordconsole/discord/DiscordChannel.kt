@@ -20,8 +20,8 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     private var queue: Queue<String> = LinkedList()
     private var canChangeTopic = false
     private val parser = JsonParser()
-    private var sendMessageJob: Job
-    private var getDataJob: Job
+    private var sendMessageJob: Job? = null
+    private var getDataJob: Job? = null
     var guild: DiscordGuild? = null
 
     var hasData = false
@@ -31,6 +31,35 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     init {
         channels.add(this)
 
+    }
+
+    @Synchronized
+    fun destroy() {
+        flush()
+        getDataJob?.cancel()
+        sendMessageJob?.cancel()
+        channels.remove(this)
+    }
+
+    @Synchronized
+    fun flush() {
+        runBlocking(Dispatchers.IO) {
+            val builder = StringBuilder()
+            while (queue.isNotEmpty()) {
+                val value = queue.poll()
+                if (builder.length + value.length > 1999) {
+                    sendMessage(builder.toString())
+                    builder.clear()
+                    delay(100)
+                }
+                builder.appendLine(value)
+            }
+            if (builder.isNotEmpty()) sendMessage(builder.toString())
+        }
+    }
+
+    fun initializeJobs() {
+        if (sendMessageJob != null) return
         sendMessageJob = GlobalScope.launch(Dispatchers.IO) {
             while (true) {
                 delay(getSendingCooldown())
@@ -72,6 +101,14 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                     destroy()
                 }
                 val json = parser.parse(response.body()?.string()).asJsonObject
+                if (json.has("errors")) {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cAn error was encountered while getting data for the channel with id $id! (Is the id correct?)",
+                        LogLevel.SEVERE
+                    )
+                    destroy()
+                }
                 val guildId = json.get("guild_id").asString
                 guild = DiscordGuild.guilds.find { g ->
                     g.id == guildId
@@ -90,28 +127,6 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
         }
     }
 
-    fun destroy() {
-        flush()
-        getDataJob.cancel()
-        sendMessageJob.cancel()
-        channels.remove(this)
-    }
-
-    fun flush() {
-        runBlocking(Dispatchers.IO) {
-            val builder = StringBuilder()
-            while (queue.isNotEmpty()) {
-                val value = queue.poll()
-                if (builder.length + value.length > 1999) {
-                    sendMessage(builder.toString())
-                    builder.clear()
-                    delay(100)
-                }
-                builder.appendLine(value)
-            }
-            if (builder.isNotEmpty()) sendMessage(builder.toString())
-        }
-    }
 
     companion object {
         val channels = mutableListOf<DiscordChannel>()
@@ -121,20 +136,40 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
             val channels = configManager.getChannels()
             // Loops through all the channels
             channels.getKeys(false).forEach { channelId ->
-                val channel = configManager.getChannel(channelId)
-                val keys = mutableSetOf<LogType>()
-                // Loops through the log types of all channels and adds the right ones to the list
-                for (logType in channel.getKeys(false)) {
-                    val logSection = channel.getConfigurationSection(logType) ?: continue
-                    val isActive = logSection.getBoolean("active", false)
-                    if (!isActive) continue
-                    keys.add(LogType.valueOf(logType.toUpperCase()))
+                if (!channelId.startsWith("cmt_")) {
+                    val channel = configManager.getChannel(channelId)
+                    val keys = mutableSetOf<LogType>()
+                    // Loops through the log types of all channels and adds the right ones to the list
+                    for (logType in channel.getKeys(false)) {
+                        if (logType.startsWith("cmt_")) continue
+                        val logSection = channel.getConfigurationSection(logType) ?: continue
+                        val isActive = logSection.getBoolean("active", false)
+                        if (!isActive) continue
+                        keys.add(LogType.valueOf(logType.toUpperCase()))
+                    }
+                    DiscordChannel(channelId, plugin, keys)
                 }
-                DiscordChannel(channelId, plugin, keys)
             }
+
+            /**
+             * Removes the discord channels, bulk sends all remaining messages and re initializes the channels
+             */
+
 
         }
 
+        @Synchronized
+        fun resetChannelsGuilds(plugin: DiscordConsole) {
+            channels.forEach {
+                it.destroy()
+            }
+            for (guild in DiscordGuild.guilds) {
+                guild.destroy()
+            }
+            initializeAll(plugin)
+        }
+
+        @Synchronized
         fun sendMessage(channelId: String, botToken: String, message: String): Deferred<Int> =
             GlobalScope.async(Dispatchers.IO) {
                 val obj = JsonObject().apply {
@@ -156,12 +191,14 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
             }
     }
 
+    @Synchronized
     fun enqueueMessage(message: String) {
         queue.add(message)
     }
 
     fun getMessageFormat(type: LogType): String {
-        return plugin.getConfigManager().getChannel(id).getString(type.name.toLowerCase(), type.defaultFormat) as String
+        return plugin.getConfigManager().getChannel(id).getConfigurationSection(type.name.toLowerCase())
+            ?.getString("format", type.defaultFormat)!!
     }
 
     fun getSendingCooldown(): Long {

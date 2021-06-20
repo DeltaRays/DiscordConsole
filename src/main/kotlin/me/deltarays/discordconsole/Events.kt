@@ -13,7 +13,9 @@ import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.server.ServerLoadEvent
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.regex.Pattern
 
@@ -21,7 +23,6 @@ class Events(private val plugin: DiscordConsole) : Listener {
     @EventHandler
     fun serverStartup(evt: ServerLoadEvent) {
         DiscordConsole.serverHasStartedUp = true
-
         for (channel in DiscordChannel.channels) {
             if (channel.types.contains(LogType.STARTUP)) {
                 val fmt: String = channel.getMessageFormat(LogType.STARTUP)
@@ -46,8 +47,8 @@ class Events(private val plugin: DiscordConsole) : Listener {
             .replace(Regex("\\{message}", RegexOption.IGNORE_CASE), message)
             .replace(Regex("\\{format}", RegexOption.IGNORE_CASE), format)
             .replace(Regex("\\{date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
-                val dateFormat = SimpleDateFormat(e.groupValues.getOrElse(0) { "HH:mm:ss" });
-                dateFormat.format(Date())
+                val dateFormat = DateTimeFormatter.ofPattern(e.groupValues.getOrElse(1) { "hh:mm:ss" })
+                dateFormat.format(Instant.ofEpochMilli(Date().time).atOffset(ZoneOffset.UTC))
             }
     }
 
@@ -85,7 +86,8 @@ class Events(private val plugin: DiscordConsole) : Listener {
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val joinSection =
                     channelSection.getConfigurationSection("joins") ?: channelSection.createSection("joins")
-                val formatted = Utils.convertPlaceholders(fmt, p).replace(Regex("\\{player}", RegexOption.IGNORE_CASE), p.name)
+                val formatted =
+                    Utils.convertPlaceholders(fmt, p).replace(Regex("\\{player}", RegexOption.IGNORE_CASE), p.name)
                 val filterStr = joinSection.getString("filter") ?: ""
                 if (filterStr.isNotEmpty()) {
                     val filter = Pattern.compile(filterStr)
@@ -105,7 +107,8 @@ class Events(private val plugin: DiscordConsole) : Listener {
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val quitSection =
                     channelSection.getConfigurationSection("quits") ?: channelSection.createSection("quits")
-                val formatted = Utils.convertPlaceholders(fmt, p).replace(Regex("\\{player}", RegexOption.IGNORE_CASE), p.name)
+                val formatted =
+                    Utils.convertPlaceholders(fmt, p).replace(Regex("\\{player}", RegexOption.IGNORE_CASE), p.name)
                 val filterStr = quitSection.getString("filter") ?: ""
                 if (filterStr.isNotEmpty()) {
                     val filter = Pattern.compile(filterStr)
@@ -120,13 +123,14 @@ class Events(private val plugin: DiscordConsole) : Listener {
     fun deaths(evt: PlayerDeathEvent) {
         val p = evt.entity
         for (channel in DiscordChannel.channels) {
-            if (channel.types.contains(LogType.DEATH)) {
-                val fmt: String = channel.getMessageFormat(LogType.DEATH)
+            if (channel.types.contains(LogType.DEATHS)) {
+                val fmt: String = channel.getMessageFormat(LogType.DEATHS)
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val deathSection =
                     channelSection.getConfigurationSection("death") ?: channelSection.createSection("death")
-                val formatted = Utils.convertPlaceholders(fmt, p).replace(Regex("\\{player}", RegexOption.IGNORE_CASE), p.name)
-                    .replace(Regex("\\{message}", RegexOption.IGNORE_CASE), evt.deathMessage ?: "")
+                val formatted =
+                    Utils.convertPlaceholders(fmt, p).replace(Regex("\\{player}", RegexOption.IGNORE_CASE), p.name)
+                        .replace(Regex("\\{message}", RegexOption.IGNORE_CASE), evt.deathMessage ?: "")
                 val filterStr = deathSection.getString("filter") ?: ""
                 if (filterStr.isNotEmpty()) {
                     val filter = Pattern.compile(filterStr)
