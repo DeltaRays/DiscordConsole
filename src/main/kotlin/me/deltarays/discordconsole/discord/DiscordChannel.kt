@@ -12,13 +12,13 @@ import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
-import java.util.*
+import java.util.concurrent.LinkedBlockingQueue
 
 
 class DiscordChannel(val id: String, private val plugin: DiscordConsole, var types: MutableSet<LogType>) {
     private val client = OkHttpClient()
-    private var queue: Queue<String> = Collections.synchronizedList(LinkedList<String>()) as Queue<String>
-    private var canChangeTopic = false
+    private var queue: LinkedBlockingQueue<String> = LinkedBlockingQueue()
+    private var canChangeTopic = true
     private val parser = JsonParser()
     private var sendMessageJob: Job? = null
     private var getDataJob: Job? = null
@@ -30,18 +30,15 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
     init {
         channels.add(this)
-
     }
 
-    @Synchronized
     fun destroy() {
         getDataJob?.cancel()
         sendMessageJob?.cancel()
         flush()
-        channels.remove(this)
+        channels.removeIf { channel -> channel == this }
     }
 
-    @Synchronized
     fun flush() {
         runBlocking(Dispatchers.IO) {
             val builder = StringBuilder()
@@ -129,7 +126,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
 
     companion object {
-        val channels: MutableList<DiscordChannel> = Collections.synchronizedList(mutableListOf<DiscordChannel>())
+        val channels = mutableListOf<DiscordChannel>()
         private val client = OkHttpClient()
         fun initializeAll(plugin: DiscordConsole) {
             val configManager = plugin.getConfigManager()
@@ -158,18 +155,15 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
         }
 
-        @Synchronized
+
         fun resetChannelsGuilds(plugin: DiscordConsole) {
-            channels.forEach {
-                it.destroy()
-            }
-            for (guild in DiscordGuild.guilds) {
-                guild.destroy()
-            }
+            channels.clear()
+            DiscordGuild.guilds.clear()
+
             initializeAll(plugin)
         }
 
-        @Synchronized
+
         fun sendMessage(channelId: String, botToken: String, message: String): Deferred<Int> =
             GlobalScope.async(Dispatchers.IO) {
                 val obj = JsonObject().apply {
@@ -191,7 +185,6 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
             }
     }
 
-    @Synchronized
     fun enqueueMessage(message: String) {
         queue.add(message)
     }

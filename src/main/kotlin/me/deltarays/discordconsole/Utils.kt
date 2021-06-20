@@ -77,11 +77,9 @@ object Utils {
                 put("guild_description", guild.description ?: "")
             }
             if (memberUser != null) {
-                println("EFOKGOEKGEK")
                 val username = memberUser.second.get("username").asString
                 val memberNick =
                     if (!memberUser.first.has("nick")) username else memberUser.first.get("nick").asString
-                println(memberNick)
                 put("member_nickname", memberNick)
                 put("member_id", memberUser.second.get("id").asString)
                 put("member_username", username)

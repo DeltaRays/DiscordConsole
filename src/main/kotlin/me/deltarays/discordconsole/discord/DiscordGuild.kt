@@ -7,13 +7,12 @@ import me.deltarays.discordconsole.LogLevel
 import me.deltarays.discordconsole.Utils
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.util.*
 
 class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
     private val getDataJob: Job
 
     private val client = OkHttpClient()
-    var channels: MutableList<DiscordChannel> = Collections.synchronizedList(mutableListOf<DiscordChannel>())
+    var channels = mutableListOf<DiscordChannel>()
     private val parser = JsonParser()
 
     var hasData = false
@@ -21,10 +20,9 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
     var memberCount: Int? = null; // approximate_member_count in json
     var description: String? = null;
 
-    @Synchronized
     fun destroy() {
         getDataJob.cancel()
-        guilds.remove(this)
+        guilds.removeIf { guild -> guild == this }
     }
 
     init {
@@ -45,10 +43,8 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
                         "&cGuild with id &4$id &cdoesn't exist!",
                         LogLevel.SEVERE
                     )
-                    DiscordChannel.channels.forEach { channel ->
-                        if (channel.guild?.id == id) {
-                            channel.destroy()
-                        }
+                    DiscordChannel.channels.removeIf { channel ->
+                        channel.guild?.id == id
                     }
                 } else if (code == 403) {
                     Utils.logColored(
@@ -56,10 +52,8 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
                         "&cThe bot doesn't have access to guild with id &4$id&c!",
                         LogLevel.SEVERE
                     )
-                    DiscordChannel.channels.forEach { channel ->
-                        if (channel.guild?.id == id) {
-                            channel.destroy()
-                        }
+                    DiscordChannel.channels.removeIf { channel ->
+                        channel.guild?.id == id
                     }
                 }
                 val json = parser.parse(response.body()?.string()).asJsonObject
@@ -75,6 +69,6 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
 
 
     companion object {
-        val guilds: MutableList<DiscordGuild> = Collections.synchronizedList(mutableListOf<DiscordGuild>())
+        val guilds = mutableListOf<DiscordGuild>()
     }
 }
