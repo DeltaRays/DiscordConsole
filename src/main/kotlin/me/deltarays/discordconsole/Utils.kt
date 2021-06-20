@@ -59,7 +59,6 @@ object Utils {
         val placeholders = HashMap<String, String>().apply {
             put("player_count", unvanishedPlayers.toString())
             put("player_max", Bukkit.getServer().maxPlayers.toString())
-            put("date", Date().toString())
             if (DiscordConsole.serverHasStartedUp)
                 put("total_players", Bukkit.getServer().offlinePlayers.size.toString())
             put("motd", Bukkit.getServer().motd)

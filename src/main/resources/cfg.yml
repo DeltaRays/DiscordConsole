@@ -1,9 +1,20 @@
+# Thanks for using DiscordConsole
+
+# The config options have comments to explain what they're doing.
+# If you have any more questions check out the wiki (https://github.com/DeltaRays/DiscordConsole/wiki)
+# Or join the discord server (https://discord.gg/WSaWztJ)
+
+
 bot:
-  token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # The bot's token
-  status: online # The bot's status (online, dnd, idle, invisible)
+  # The bot's token
+  token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  # The bot's status (online, dnd, idle, invisible)
+  status: online
   activity:
-    name: Minecraft # The name of the bot's status
-    type: playing # The type of the bot's status (game, listening, watching, etc.)
+    # The name of the bot's status
+    name: Minecraft
+    # The type of the bot's status (game, listening, watching, etc.)
+    type: playing
 
 # The plugin's console prefix
 prefix: "&7[&6DiscordConsole&7]"
@@ -63,9 +74,43 @@ commands:
   # The discord commands, the key is the name of the command, and the value is the message to return
   discordlink: https://discord.gg/WSaWztJ
 
-
-
 discord-commands:
   # The discord commands, the key is the name of the command, and the value is the message to return
   "!ip": "<server ip>"
-debug: BOOLEAN
+
+
+
+# DiscordConsole supports 'placeholders'
+# That means that you can use the PlaceholderAPI plugin to add placeholders to the messages,
+# for example to show the current online players on the server in a command
+
+# DiscordConsole also has its own placeholders, which can be used in different places
+# Here is a brief overview
+# {player_count} The amount of online players
+# {player_max} The maximum of players allowed to join
+# {total_players} The amount of players to have ever joined your server
+# {motd} The server's motd
+# {name} The server's name
+# {version} The server's version
+# We also have discord channel-only placeholders
+#   {channel_name} The name of the current discord channel
+#   {channel_topic} The topic of the current discord channel
+#   {channel_id} The id of the current discord channel
+# We also have discord server only placeholders
+#   {guild_name} The discord guild's name
+#   {guild_id} The discord guild's id
+#   {guild_members} The approximate member count of the guild
+#   {guild_description} The guild's description
+# We also have discord member only placeholders
+#   {member_nickname} A discord user's nickname
+#   {member_username} A discord member's username
+#   {member_id} A discord member's id
+
+
+
+# Whether to send debug messages (useful for the developer to find more information about issues)
+debug: false
+
+
+# Don't change this otherwise it will break things
+version: 1.4.0

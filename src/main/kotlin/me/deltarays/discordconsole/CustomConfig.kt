@@ -23,8 +23,7 @@ class CustomConfig : YamlConfiguration() {
             if (rawText.containsKey(index))
                 builder.append(rawText.get(index)).append("\n")
             builder.append(
-                line
-                    .replaceFirst(Regex("cmt_\\d+!\\s*:"), "#")
+                revertParseCommentLine(line)
             ).append("\n")
         }
         return builder.toString()
@@ -80,6 +79,24 @@ class CustomConfig : YamlConfiguration() {
         super.set(path, value)
     }
 
+    private fun revertParseCommentLine(line: String): String {
+        return line
+            .replaceFirst(Regex("cmt_\\d+!\\s*:"), "#")
+            .replaceFirst(Regex("#\\s*(.*)"), "# $1")
+            .replace(Regex("\\\\(\"|\')"), "\"")
+            .replace(Regex("\'\'"), "'")
+    }
+
+    /**
+     * Replaces all " with \" and surrounds the text with ""'s
+     */
+    private fun parseCommentLine(line: String, cmt_index: Int): String {
+        return line.replace(Regex("\""), "\\\"").replaceFirst(Regex("#\\s*(.*)"), "#\"$1\"").replaceFirst(
+            Regex("(\\s*)#"),
+            String.format("$1cmt_%s!: ", cmt_index)
+        )
+    }
+
     /**
      * @param contents The unparsed yaml
      * Parses the comments of the yaml (by converting them to yaml objects)
@@ -89,9 +106,8 @@ class CustomConfig : YamlConfiguration() {
         for (line in contents.split("\n")) {
             if (line.trimStart().startsWith("#")) {
                 builder.append(
-                    line.replaceFirst(
-                        Regex("(\\s*)#"),
-                        String.format("$1cmt_%s!:", comments)
+                    parseCommentLine(
+                        line, comments
                     )
                 )
                 comments++
