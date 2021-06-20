@@ -81,6 +81,7 @@ object Utils {
                 val username = memberUser.second.get("username").asString
                 val memberNick =
                     if (!memberUser.first.has("nick")) username else memberUser.first.get("nick").asString
+                println(memberNick)
                 put("member_nickname", memberNick)
                 put("member_id", memberUser.second.get("id").asString)
                 put("member_username", username)
@@ -104,7 +105,7 @@ object Utils {
                     stringBuilder.append(message.substring(start, i))
                     continue
                 }
-                val placeholder = message.substring(start + 1, i - 1)
+                val placeholder = message.substring(start + 1, i)
                 val chars = placeholders[placeholder] ?: message.substring(start, i + 1)
                 stringBuilder.append(chars)
             }

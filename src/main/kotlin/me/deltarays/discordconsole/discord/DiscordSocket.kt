@@ -249,11 +249,13 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                 if (discordMinecraftSection.getBoolean("enabled", false)) {
                     val format =
                         discordMinecraftSection.getString("format", "[DISCORD] {member_nickname} > {message}")!!
-                    val parsed = Utils.convertPlaceholders(
-                        format,
-                        channel = channel,
-                        guild = channel.guild,
-                        memberUser = Pair(member, author)
+                    val parsed = Utils.tacc(
+                        Utils.convertPlaceholders(
+                            format,
+                            channel = channel,
+                            guild = channel.guild,
+                            memberUser = Pair(member, author)
+                        )
                     )
                         .replace(Regex("\\{date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
                             val dateFormat = DateTimeFormatter.ofPattern(e.groupValues.getOrElse(1) { "hh:mm:ss" })

@@ -7,6 +7,7 @@ import me.deltarays.discordconsole.LogLevel
 import me.deltarays.discordconsole.Utils
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.*
 
 class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
     private val getDataJob: Job
@@ -74,6 +75,6 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
 
 
     companion object {
-        val guilds = mutableListOf<DiscordGuild>()
+        val guilds: MutableList<DiscordGuild> = Collections.synchronizedList(mutableListOf<DiscordGuild>())
     }
 }

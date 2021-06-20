@@ -48,15 +48,15 @@ class MainCommand(private val plugin: DiscordConsole) : TabExecutor, Listener {
             if (sender is Player) sender.sendMessage(Utils.tacc(plugin.getConfigManager().getPrefix() + " " + message))
             else Utils.logColored(plugin.getConfigManager().getPrefix(), message, logLevel)
         } else if (listOf("send", "sendmessage", "message").contains(args.getOrNull(0)?.toLowerCase())) {
-            val messageArgs = args.slice(1..args.size)
+            val messageArgs = args.slice(1 until args.size)
             DiscordChannel.channels.forEach { channel ->
                 if (channel.name.toLowerCase() == messageArgs.getOrNull(0) || channel.id == messageArgs.getOrNull(0))
-                    channel.enqueueMessage(messageArgs.slice(1..args.size).joinToString(" "))
+                    channel.enqueueMessage(messageArgs.slice(1 until args.size).joinToString(" "))
             }
         } else if (listOf("broadcast", "announce").contains(args.getOrNull(0)?.toLowerCase())) {
             DiscordChannel.channels.forEach { channel ->
                 GlobalScope.launch(Dispatchers.IO) {
-                    channel.sendMessage(args.slice(1..args.size).joinToString(" "))
+                    channel.sendMessage(args.slice(1 until args.size).joinToString(" "))
                 }
             }
         }

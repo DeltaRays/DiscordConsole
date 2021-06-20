@@ -35,9 +35,9 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
     @Synchronized
     fun destroy() {
-        flush()
         getDataJob?.cancel()
         sendMessageJob?.cancel()
+        flush()
         channels.remove(this)
     }
 
@@ -129,7 +129,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
 
     companion object {
-        val channels = mutableListOf<DiscordChannel>()
+        val channels: MutableList<DiscordChannel> = Collections.synchronizedList(mutableListOf<DiscordChannel>())
         private val client = OkHttpClient()
         fun initializeAll(plugin: DiscordConsole) {
             val configManager = plugin.getConfigManager()
