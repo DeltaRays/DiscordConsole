@@ -46,14 +46,34 @@ class MainCommand(private val plugin: DiscordConsole) : TabExecutor, Listener {
             else Utils.logColored(plugin.getConfigManager().getPrefix(), message, logLevel)
         } else if (listOf("send", "sendmessage", "message").contains(args.getOrNull(0)?.toLowerCase())) {
             val messageArgs = args.slice(1 until args.size)
-                DiscordChannel.channels.forEach { channel ->
-                    if (channel.name.toLowerCase() == messageArgs.getOrNull(0) || channel.id == messageArgs.getOrNull(0))
-                        channel.enqueueMessage(messageArgs.slice(1 until args.size).joinToString(" "))
-                }
-        } else if (listOf("broadcast", "announce").contains(args.getOrNull(0)?.toLowerCase())) {
-                DiscordChannel.channels.forEach { channel ->
-                    channel.enqueueMessage(args.slice(1 until args.size).joinToString(" "))
+            val channel = DiscordChannel.channels.find { c ->
+                c.name.toLowerCase() == messageArgs.getOrNull(0) || c.id == messageArgs.getOrNull(0)
             }
+            if (channel == null) {
+                sender.sendMessage(
+                    Utils.tacc(
+                        plugin.getConfigManager()
+                            .getPrefix() + " &cThat channel is not in the plugin's list of channels!"
+                    )
+                )
+                return true
+            }
+            channel.enqueueMessage(messageArgs.slice(1 until messageArgs.size).joinToString(" "))
+            sender.sendMessage(
+                Utils.tacc(
+                    plugin.getConfigManager().getPrefix() + " &aSent message to the channel ${channel.name}!"
+                )
+            )
+
+        } else if (listOf("broadcast", "announce").contains(args.getOrNull(0)?.toLowerCase())) {
+            DiscordChannel.channels.forEach { channel ->
+                channel.enqueueMessage(args.slice(1 until args.size).joinToString(" "))
+            }
+            sender.sendMessage(
+                Utils.tacc(
+                    plugin.getConfigManager().getPrefix() + " &aBroadcast message to all discord channels!"
+                )
+            )
         }
         return true
     }
@@ -63,16 +83,22 @@ class MainCommand(private val plugin: DiscordConsole) : TabExecutor, Listener {
         command: Command,
         alias: String,
         args: Array<out String>
-    ): MutableList<String> {
+    ): List<String> {
         if (args.size == 1) return mutableListOf("reload", "checkupdate", "message", "broadcast")
         else if (listOf("send", "sendmessage", "message").contains(args.getOrNull(0)?.toLowerCase())) {
-            if (args.size == 2)
-                return mutableListOf("<channel id / name>")
-            else if (args.size == 3)
-                return mutableListOf("<message>")
+            if (args.size == 2) {
+                val list = mutableListOf<String>()
+                DiscordChannel.channels.forEach { channel ->
+                    list.add(channel.name)
+                    list.add(channel.id)
+                }
+                list.add("<id/name>")
+                return list
+            } else if (args.size == 3)
+                return listOf("<message>")
         } else if (listOf("broadcast", "announce").contains(args.getOrNull(0)?.toLowerCase()))
             if (args.size == 2)
-                return mutableListOf("<message>")
+                return listOf("<message>")
         return mutableListOf()
     }
 }
