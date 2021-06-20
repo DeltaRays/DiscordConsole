@@ -239,16 +239,17 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                 val discordMinecraftSection = chatSection.getConfigurationSection("minecraft-discord")
                     ?: chatSection.createSection("minecraft-discord")
                 if (discordMinecraftSection.getBoolean("enabled", false)) {
+                    val format = discordMinecraftSection.getString("format", "")!!
                     val parsed = Utils.convertPlaceholders(
-                        content,
+                        format,
                         channel = channel,
                         guild = channel.guild,
                         memberUser = Pair(member, author)
                     )
-                        .replace(Regex("%date\\[(.*?)]%", RegexOption.IGNORE_CASE)) { e ->
+                        .replace(Regex("\\{date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
                             val dateFormat = SimpleDateFormat(e.groupValues.getOrElse(0) { "HH:mm:ss" });
                             dateFormat.format(Date())
-                        }
+                        }.replace(Regex("\\{message}", RegexOption.IGNORE_CASE), content)
                     Bukkit.broadcastMessage(parsed)
                 }
             } else if (channel.types.contains(LogType.CONSOLE)) {

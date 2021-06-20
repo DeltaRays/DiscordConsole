@@ -9,7 +9,6 @@ import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import org.bukkit.metadata.MetadataValue
 import java.util.*
-import kotlin.collections.HashMap
 
 
 /**
@@ -89,13 +88,21 @@ object Utils {
         val stringBuilder = StringBuilder()
         var i = 0
         while (i < arr.size) {
-            if (arr[i] != '%') {
+            if (arr[i] != '{') {
                 stringBuilder.append(arr[i])
             } else {
+                if (arr.getOrNull(i - 1) == '\\') {
+                    stringBuilder.append(arr[i])
+                    continue
+                }
                 val start = i++
-                while (arr[i] != '%') i++
+                while (arr[i] != '}') i++
+                if (arr.getOrNull(i - 2) == '\\') {
+                    stringBuilder.append(message.substring(start, i))
+                    continue
+                }
                 val placeholder = message.substring(start + 1, i - 1)
-                val chars = placeholders[placeholder]
+                val chars = placeholders[placeholder] ?: message.substring(start, i + 1)
                 stringBuilder.append(chars)
             }
             ++i

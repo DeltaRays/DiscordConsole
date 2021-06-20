@@ -56,7 +56,7 @@ class ConfigManager(plugin: DiscordConsole) {
                 "            format: '[{date[HH:mm:ss]}] [{thread}/{level}] {message}' # How the console messages are structured\n" +
                 "            commands-enabled: true # Whether or not messages sent in that channel get executed as console commands\n" +
                 "            send-startup: true # Whether or not to send startup messages\n" +
-                "           filter: '' # The regular expression to filter each message\n" +
+                "            filter: '' # The regular expression to filter each message\n" +
                 "       chat:\n" +
                 "           active: false\n" +
                 "           format: '{player}: {message}'\n" +

@@ -42,10 +42,10 @@ class Events(private val plugin: DiscordConsole) : Listener {
 
     fun parseChat(str: String, player: Player, message: String, format: String): String {
         return Utils.convertPlaceholders(str, player = player)
-            .replace(Regex("%chat_player_name%", RegexOption.IGNORE_CASE), player.name)
-            .replace(Regex("%chat_message%", RegexOption.IGNORE_CASE), message)
-            .replace(Regex("%chat_format%", RegexOption.IGNORE_CASE), format)
-            .replace(Regex("%date\\[(.*?)]%", RegexOption.IGNORE_CASE)) { e ->
+            .replace(Regex("\\{player}", RegexOption.IGNORE_CASE), player.name)
+            .replace(Regex("\\{message}", RegexOption.IGNORE_CASE), message)
+            .replace(Regex("\\{format}", RegexOption.IGNORE_CASE), format)
+            .replace(Regex("\\{date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
                 val dateFormat = SimpleDateFormat(e.groupValues.getOrElse(0) { "HH:mm:ss" });
                 dateFormat.format(Date())
             }
