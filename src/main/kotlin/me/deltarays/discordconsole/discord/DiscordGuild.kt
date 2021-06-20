@@ -13,7 +13,7 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
     private val getDataJob: Job
 
     private val client = OkHttpClient()
-    var channels = mutableListOf<DiscordChannel>()
+    var channels: MutableList<DiscordChannel> = Collections.synchronizedList(mutableListOf<DiscordChannel>())
     private val parser = JsonParser()
 
     var hasData = false

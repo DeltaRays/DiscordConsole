@@ -17,7 +17,7 @@ import java.util.*
 
 class DiscordChannel(val id: String, private val plugin: DiscordConsole, var types: MutableSet<LogType>) {
     private val client = OkHttpClient()
-    private var queue: Queue<String> = LinkedList()
+    private var queue: Queue<String> = Collections.synchronizedList(LinkedList<String>()) as Queue<String>
     private var canChangeTopic = false
     private val parser = JsonParser()
     private var sendMessageJob: Job? = null
