@@ -239,7 +239,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                 val discordMinecraftSection = chatSection.getConfigurationSection("minecraft-discord")
                     ?: chatSection.createSection("minecraft-discord")
                 if (discordMinecraftSection.getBoolean("enabled", false)) {
-                    val format = discordMinecraftSection.getString("format", "")!!
+                    val format = discordMinecraftSection.getString("format", "[DISCORD] {member_nickname} > {message}")!!
                     val parsed = Utils.convertPlaceholders(
                         format,
                         channel = channel,

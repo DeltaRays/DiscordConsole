@@ -128,7 +128,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                     val logSection = channel.getConfigurationSection(logType) ?: continue
                     val isActive = logSection.getBoolean("active", false)
                     if (!isActive) continue
-                    keys.add(LogType.valueOf(logType))
+                    keys.add(LogType.valueOf(logType.toUpperCase()))
                 }
                 DiscordChannel(channelId, plugin, keys)
             }
