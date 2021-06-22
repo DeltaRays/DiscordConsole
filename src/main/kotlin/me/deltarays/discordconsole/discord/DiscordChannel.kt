@@ -12,6 +12,7 @@ import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.LinkedBlockingQueue
 
 
@@ -23,7 +24,6 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     private var sendMessageJob: Job? = null
     private var getDataJob: Job? = null
     var guild: DiscordGuild? = null
-
     private var hasData = false
     lateinit var name: String
     lateinit var topic: String
@@ -33,10 +33,10 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     }
 
     private fun destroy() {
-        getDataJob?.cancel()
         sendMessageJob?.cancel()
+        getDataJob?.cancel()
         flush()
-        channels.removeIf { channel -> channel == this }
+        channels.remove(this)
     }
 
     private fun flush() {
@@ -74,6 +74,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
         }
         getDataJob = GlobalScope.launch(Dispatchers.IO) {
             while (true) {
+
                 val request = Request.Builder()
                     .url("$BASE_API_URL/channels/$id")
                     .get()
@@ -126,14 +127,14 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
 
     companion object {
-        val channels = mutableListOf<DiscordChannel>()
+        val channels = CopyOnWriteArrayList<DiscordChannel>()
         private val client = OkHttpClient()
         private fun initializeAll(plugin: DiscordConsole) {
             val configManager = plugin.getConfigManager()
             val channels = configManager.getChannels()
             // Loops through all the channels
             channels.getKeys(false).forEach { channelId ->
-                if (!channelId.startsWith("cmt_") && channelId.equals("id", true)) {
+                if (!channelId.startsWith("cmt_") && !channelId.equals("id", true)) {
                     val channel = configManager.getChannel(channelId)
                     val keys = mutableSetOf<LogType>()
                     // Loops through the log types of all channels and adds the right ones to the list

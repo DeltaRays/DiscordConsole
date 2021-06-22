@@ -67,12 +67,6 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
     private val parser = JsonParser()
     private var ackReceived = true
     override fun onMessage(message: String?) {
-        if (plugin.config.getBoolean("debug", false))
-            Utils.logColored(
-                plugin.getConfigManager().getPrefix(),
-                "[Socket] Message received!\n$message",
-                LogLevel.DEBUG
-            )
         val payload: JsonObject = try {
             parser.parse(message).asJsonObject
         } catch (e: Exception) {
@@ -176,7 +170,6 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
         } else if (op == 9) {
             val d = payload.get("d").asBoolean
             // d represents whether or not the session is resumable
-            plugin.logger.info(d.toString())
             if (d) {
                 Utils.logColored(
                     plugin.getConfigManager().getPrefix(),

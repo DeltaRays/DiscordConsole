@@ -7,6 +7,7 @@ import me.deltarays.discordconsole.LogLevel
 import me.deltarays.discordconsole.Utils
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.concurrent.CopyOnWriteArrayList
 
 class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
     private val getDataJob: Job
@@ -19,7 +20,6 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
     lateinit var name: String
     var memberCount: Int? = null // approximate_member_count in json
     var description: String? = null
-
     fun destroy() {
         getDataJob.cancel()
         guilds.removeIf { guild -> guild == this }
@@ -69,6 +69,6 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
 
 
     companion object {
-        val guilds = mutableListOf<DiscordGuild>()
+        val guilds = CopyOnWriteArrayList<DiscordGuild>()
     }
 }
