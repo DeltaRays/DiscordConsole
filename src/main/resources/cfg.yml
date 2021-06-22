@@ -35,18 +35,19 @@ channels:
       active: true
       # How the console messages are structured
       format: '[{date[HH:mm:ss]}] [{thread}/{level}] {message}'
-      # Whether or not messages sent in that channel get executed as console commands
+      # If messages sent in that channel get executed as console commands
       commands-enabled: true
-      # Whether or not to send startup messages
+      # If we should send startup messages
       send-startup: true
-      # The regular expression to filter each message, can be used to make it so only messages containing specific strings get sent
+      # The regular expression to filter each message
+      # Useful for only letting certain messages get sent
       filter: ''
     chat:
       active: false
       format: '{player}: {message}'
       filter: ''
       minecraft-discord:
-        # Whether or not anything sent in that channel will be broadcast to minecraft
+        # If anything sent in that channel will be broadcast to minecraft
         enabled: false
         format: '[DISCORD] {member_nickname} > {message}'
     joins:
@@ -69,22 +70,26 @@ channels:
       format: "The server has stopped!"
 
 
-
+# The minecraft commands.
 commands:
-  # The discord commands, the key is the name of the command, and the value is the message to return
-  discordlink: https://discord.gg/WSaWztJ
+  # The key is the name of the command.
+  # The value is the message to return
+  discordlink: "https://discord.gg/WSaWztJ"
 
+# The discord commands.
 discord-commands:
-  # The discord commands, the key is the name of the command, and the value is the message to return
+  # The key is the name of the command.
+  # The value is the message to return
   "!ip": "<server ip>"
 
 
 
 # DiscordConsole supports 'placeholders'
-# That means that you can use the PlaceholderAPI plugin to add placeholders to the messages,
-# for example to show the current online players on the server in a command
+# That means that you can use the PlaceholderAPI plugin
+# to add placeholders to the messages, for example
+# to show the current number of players on the server in a command
 
-# DiscordConsole also has its own placeholders, which can be used in different places
+# DiscordConsole also has its own placeholders:
 # Here is a brief overview
 # {player_count} The amount of online players
 # {player_max} The maximum of players allowed to join
@@ -108,7 +113,7 @@ discord-commands:
 
 
 
-# Whether to send debug messages (useful for the developer to find more information about issues)
+# Send debug messages (sends more information about bugs/errors)
 debug: false
 
 
