@@ -80,11 +80,16 @@ class CustomConfig : YamlConfiguration() {
     }
 
     private fun revertParseCommentLine(line: String): String {
-        return line
-            .replaceFirst(Regex("cmt_\\d+!\\s*:"), "#")
-            .replaceFirst(Regex("#\\s*(.*)"), "# $1")
-            .replace(Regex("\\\\(\"|\')"), "\"")
-            .replace(Regex("\'\'"), "'")
+        val workingLine =
+            line
+                .replaceFirst(Regex("cmt_\\d+!\\s*:"), "#")
+        if (workingLine.trimStart().startsWith("#")) {
+
+            return workingLine.replaceFirst(Regex("#\\s*\'(.*)\'"), "# $1")
+                .replace(Regex("\'{2}"), "\'")
+
+        }
+        return workingLine
     }
 
     /**
