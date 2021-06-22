@@ -244,8 +244,8 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             if (channel.types.contains(LogType.CHAT)) {
                 val channelSection = plugin.getConfigManager().getChannel(channel.id)
                 val chatSection = channelSection.getConfigurationSection("chat") ?: channelSection.createSection("chat")
-                val discordMinecraftSection = chatSection.getConfigurationSection("minecraft-discord")
-                    ?: chatSection.createSection("minecraft-discord")
+                val discordMinecraftSection = chatSection.getConfigurationSection("discord-to-minecraft")
+                    ?: chatSection.createSection("discord-to-minecraft")
                 if (discordMinecraftSection.getBoolean("enabled", false)) {
                     val format =
                         discordMinecraftSection.getString("format", "[DISCORD] {member_nickname} > {message}")!!

@@ -44,10 +44,11 @@ channels:
       filter: ''
     chat:
       active: false
+      # The format of the messages sent from minecraft to discord
       format: '{player}: {message}'
       filter: ''
-      minecraft-discord:
-        # If anything sent in that channel will be broadcast to minecraft
+      discord-to-minecraft:
+        # If anything sent in this channel will be broadcast to minecraft
         enabled: false
         format: '[DISCORD] {member_nickname} > {message}'
     joins:
