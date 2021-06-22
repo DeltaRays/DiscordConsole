@@ -98,6 +98,12 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                     )
                     destroy()
                 }
+                if (plugin.config.getBoolean("debug", false)) {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&7Response of getDataJob:\ncode: $code\nmessage: ${response.message()}", LogLevel.DEBUG
+                    )
+                }
                 val json = parser.parse(response.body()?.string()).asJsonObject
                 if (json.has("errors")) {
                     Utils.logColored(
@@ -114,7 +120,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                 guild!!.channels.add(this@DiscordChannel)
                 hasData = true
                 name = json.get("name").asString
-                topic = json.get("topic").asString
+                topic = if (json.has("topic")) json.get("topic").asString else ""
                 response.close()
                 val topic = getConfigTopic()
                 if (topic != null)
@@ -134,7 +140,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
             val channels = configManager.getChannels()
             // Loops through all the channels
             channels.getKeys(false).forEach { channelId ->
-                if (!channelId.startsWith("cmt_") && !channelId.equals("id", true)) {
+                if (!channelId.startsWith("cmt_") && !channelId.equals("000000000000000000", true)) {
                     val channel = configManager.getChannel(channelId)
                     val keys = mutableSetOf<LogType>()
                     // Loops through the log types of all channels and adds the right ones to the list

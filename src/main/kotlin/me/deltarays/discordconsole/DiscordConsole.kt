@@ -172,6 +172,8 @@ class DiscordConsole : JavaPlugin() {
     var customCommands = HashSet<CustomCommand>();
     var commandMap: CommandMap? = null
     fun registerCustomCommands() {
+        if (commandMap == null)
+            exposeCommandMap();
         customCommands.forEach { customCommand ->
             customCommand.unregister(commandMap!!)
         }

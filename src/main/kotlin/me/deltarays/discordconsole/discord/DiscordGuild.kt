@@ -60,7 +60,7 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
                 response.close()
                 hasData = true
                 name = json.get("name").asString
-                description = if (json.get("description").isJsonNull) null else json.get("description").asString
+                description = if (!json.has("description")) null else json.get("description").asString
                 memberCount = json.get("approximate_member_count").asInt
                 delay(20000)
             }

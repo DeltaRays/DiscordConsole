@@ -1,6 +1,7 @@
 package me.deltarays.discordconsole
 
 import org.bukkit.configuration.ConfigurationSection
+import org.bukkit.configuration.InvalidConfigurationException
 import java.io.File
 import java.util.*
 import kotlin.math.roundToInt
@@ -21,7 +22,7 @@ class ConfigManager(var plugin: DiscordConsole) {
      * Loads the configuration file inside the {@see configuration}
      */
     fun loadConfig() {
-        if (!configFile.exists()) {
+        if (!configFile.exists() || configFile.length() < 100) {
             configFile.parentFile.mkdirs()
             configFile.createNewFile()
             DiscordConsole.isFirstLoad = true
@@ -30,12 +31,20 @@ class ConfigManager(var plugin: DiscordConsole) {
         }
         configFile.createNewFile()
         configuration = CustomConfig()
-        configuration.load(configFile)
+        loadConfigurationFromFile()
         updateConfig()
     }
 
     fun saveConfig() {
         configuration.save(configFile)
+    }
+
+    fun loadConfigurationFromFile(){
+        try {
+            configuration.load(configFile)
+        } catch(exc: InvalidConfigurationException){
+            Utils.logColored(plugin.getConfigManager().getPrefix(), "&cThe plugin config.yml is invalid!", LogLevel.SEVERE)
+        }
     }
 
     private fun getConfigVersion(): String? {
@@ -69,7 +78,7 @@ class ConfigManager(var plugin: DiscordConsole) {
             }
             recreateDefaultFile()
             configuration = CustomConfig()
-            configuration.load(configFile)
+            loadConfigurationFromFile()
             configuration.apply {
                 set("bot.token", botToken)
                 set("bot.status", botStatus)

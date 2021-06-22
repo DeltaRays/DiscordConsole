@@ -69,6 +69,8 @@ class LogAppender(private var plugin: DiscordConsole) :
             .replace(Regex("\\{date\\[(.*?)]}", RegexOption.IGNORE_CASE)) { e ->
                 val dateFormat = DateTimeFormatter.ofPattern(e.groupValues.getOrElse(1) { "hh:mm:ss" })
                 dateFormat.format(Instant.ofEpochMilli(time).atOffset(ZoneOffset.UTC))
-            }
+            }.replace("\\[m|\\[([0-9]{1,2}[;m]?){3}|\u001b+".toRegex(), "")
+            .replace("\\x1b\\[[0-9;]*[A-Za-z]]*".toRegex(), "").replace("_", "\\_").replace("*", "\\*")
+            .replace("~", "\\~").replace("([&§])[0-9a-fklmnor]".toRegex(), "")
     }
 }
