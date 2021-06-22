@@ -15,10 +15,10 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
     var channels = mutableListOf<DiscordChannel>()
     private val parser = JsonParser()
 
-    var hasData = false
-    lateinit var name: String;
-    var memberCount: Int? = null; // approximate_member_count in json
-    var description: String? = null;
+    private var hasData = false
+    lateinit var name: String
+    var memberCount: Int? = null // approximate_member_count in json
+    var description: String? = null
 
     fun destroy() {
         getDataJob.cancel()

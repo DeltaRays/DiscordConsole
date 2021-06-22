@@ -10,7 +10,6 @@ import org.bukkit.configuration.file.YamlConfiguration
  */
 class CustomConfig : YamlConfiguration() {
     private var comments: Int = 0
-    private var rawText = mutableMapOf<Int, String>()
 
     /**
      * Saves the yaml (with comments) to a string
@@ -19,9 +18,7 @@ class CustomConfig : YamlConfiguration() {
     override fun saveToString(): String {
         val str = super.saveToString()
         val builder = StringBuilder()
-        str.split("\n").forEachIndexed { index, line ->
-            if (rawText.containsKey(index))
-                builder.append(rawText.get(index)).append("\n")
+        str.split("\n").forEach { line ->
             builder.append(
                 revertParseCommentLine(line)
             ).append("\n")
@@ -61,11 +58,6 @@ class CustomConfig : YamlConfiguration() {
             this.comments++
         }
     }
-
-    fun addRaw(index: Int, text: String) {
-        rawText.put(index, text)
-    }
-
 
     /**
      * Set a path to something and add a comment before said path

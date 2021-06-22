@@ -3,6 +3,7 @@ package me.deltarays.discordconsole
 import org.bukkit.configuration.ConfigurationSection
 import java.io.File
 import java.util.*
+import kotlin.math.roundToInt
 
 /**
  * @author DeltaRays
@@ -10,7 +11,7 @@ import java.util.*
  */
 class ConfigManager(var plugin: DiscordConsole) {
     lateinit var configuration: CustomConfig
-    var configFile = File(plugin.dataFolder.absolutePath, "config.yml")
+    private var configFile = File(plugin.dataFolder.absolutePath, "config.yml")
 
     fun getPrefix(): String {
         return configuration.getString("prefix", "&7[&6DiscordConsole&7]") as String
@@ -37,17 +38,17 @@ class ConfigManager(var plugin: DiscordConsole) {
         configuration.save(configFile)
     }
 
-    fun getConfigVersion(): String? {
+    private fun getConfigVersion(): String? {
         return configuration.getString("version")
     }
 
     /**
      * Updates the config from a version to a new one
      */
-    fun updateConfig() {
+    private fun updateConfig() {
         if (getConfigVersion() == "1.4.0") return // TODO for future versions: change this
         if (getConfigVersion() == null) {
-            configuration.save(File(plugin.dataFolder, "config_old-${Math.round(Date().time / 1000.0)}.yml"))
+            configuration.save(File(plugin.dataFolder, "config_old-${(Date().time / 1000.0).roundToInt()}.yml"))
             val botToken = configuration.getString("botToken")
             val channelRefreshRate =
                 configuration.getLong("channelRefreshRate") * 1000 // It used to be in seconds, now it's in milliseconds
@@ -91,12 +92,12 @@ class ConfigManager(var plugin: DiscordConsole) {
             saveConfig()
 
         }
-        //TODO for future versions:
+        // TODO for future versions:
         // If we make more config changes just add another check here for the old version
         // so that it automatically passes through multiple versions without us doing anything manually
     }
 
-    fun recreateDefaultFile() {
+    private fun recreateDefaultFile() {
         val defaultConfigFile = plugin.getResource("cfg.yml")!!
         configFile.delete()
         configFile.createNewFile()

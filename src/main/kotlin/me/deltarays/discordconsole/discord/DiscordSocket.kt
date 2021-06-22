@@ -23,7 +23,7 @@ import kotlin.math.ceil
 
 class DiscordSocket(uri: URI) : WebSocketClient(uri) {
     private lateinit var plugin: DiscordConsole
-    var lastS: String? = null
+    private var lastS: String? = null
     private var sessionId: String? = null
     private var isConnected = false
     private lateinit var botId: String
@@ -201,7 +201,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
         } else if (op == 7) {
             this.close(3333, "Discord asked me to reconnect")
         } else if (op == 11) {
-            this.ackReceived = true;
+            this.ackReceived = true
         }
 
     }
@@ -232,7 +232,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
     private fun handleMessage(payload: JsonObject) = GlobalScope.launch(Dispatchers.IO) {
         val d = payload.get("d").asJsonObject
         val channelId = d.get("channel_id").asString
-        val content = d.get("content").asString.replace("\\\\\"", "\"").replace("\\\\\\\\", "\\\\");
+        val content = d.get("content").asString.replace("\\\\\"", "\"").replace("\\\\\\\\", "\\\\")
         val author = d.get("author").asJsonObject
         val authorId = author.get("id").asString
         val channel = DiscordChannel.channels.find { c ->
@@ -288,7 +288,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                 continue
             }
             if (content.startsWith(key)) {
-                val code = DiscordChannel.sendMessage(
+                val code = DiscordChannel.sendMessageAsync(
                     channelId,
                     plugin.getConfigManager().getBotToken() ?: "",
                     Utils.convertPlaceholders(

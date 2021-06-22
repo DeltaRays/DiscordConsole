@@ -8,7 +8,6 @@ import org.apache.logging.log4j.core.appender.AbstractAppender
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.*
 import java.util.regex.Pattern
 
 class LogAppender(private var plugin: DiscordConsole) :

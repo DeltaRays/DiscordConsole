@@ -13,6 +13,6 @@ enum class LogType(format: String) {
     STARTUP("The server has started up!"),
     SHUTDOWN("The server has shut down!");
 
-    val defaultFormat: String = format;
+    val defaultFormat: String = format
 
 }

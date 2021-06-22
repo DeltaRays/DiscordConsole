@@ -24,7 +24,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     private var getDataJob: Job? = null
     var guild: DiscordGuild? = null
 
-    var hasData = false
+    private var hasData = false
     lateinit var name: String
     lateinit var topic: String
 
@@ -32,14 +32,14 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
         channels.add(this)
     }
 
-    fun destroy() {
+    private fun destroy() {
         getDataJob?.cancel()
         sendMessageJob?.cancel()
         flush()
         channels.removeIf { channel -> channel == this }
     }
 
-    fun flush() {
+    private fun flush() {
         runBlocking(Dispatchers.IO) {
             val builder = StringBuilder()
             while (queue.isNotEmpty()) {
@@ -128,7 +128,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     companion object {
         val channels = mutableListOf<DiscordChannel>()
         private val client = OkHttpClient()
-        fun initializeAll(plugin: DiscordConsole) {
+        private fun initializeAll(plugin: DiscordConsole) {
             val configManager = plugin.getConfigManager()
             val channels = configManager.getChannels()
             // Loops through all the channels
@@ -157,14 +157,18 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
 
 
         fun resetChannelsGuilds(plugin: DiscordConsole) {
-            channels.clear()
-            DiscordGuild.guilds.clear()
+            channels.forEach { channel ->
+                channel.destroy()
+            }
+            DiscordGuild.guilds.forEach { guild ->
+                guild.destroy()
+            }
 
             initializeAll(plugin)
         }
 
 
-        fun sendMessage(channelId: String, botToken: String, message: String): Deferred<Int> =
+        fun sendMessageAsync(channelId: String, botToken: String, message: String): Deferred<Int> =
             GlobalScope.async(Dispatchers.IO) {
                 val obj = JsonObject().apply {
                     add("allowed_mentions", JsonObject().apply {
@@ -194,11 +198,11 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
             ?.getString("format", type.defaultFormat)!!
     }
 
-    fun getSendingCooldown(): Long {
+    private fun getSendingCooldown(): Long {
         return plugin.getConfigManager().getChannel(id).getLong("cooldown", 1111)
     }
 
-    fun getConfigTopic(): String? {
+    private fun getConfigTopic(): String? {
         return plugin.getConfigManager().getChannel(id).getString("topic")
     }
 
@@ -206,7 +210,8 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     suspend fun sendMessage(message: String) =
         coroutineScope {
             withContext(Dispatchers.IO) {
-                val code = Companion.sendMessage(id, plugin.getConfigManager().getBotToken() ?: "", message).await()
+                val code =
+                    sendMessageAsync(id, plugin.getConfigManager().getBotToken() ?: "", message).await()
                 if (code == 404) {
                     Utils.logColored(
                         plugin.getConfigManager().getPrefix(),
@@ -248,28 +253,31 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                 .addHeader("Authorization", "Bot ${plugin.getConfigManager().getBotToken()}")
                 .build()
             val response = client.newCall(request).execute()
-            val code = response.code()
-            if (code == 400) {
-                Utils.logColored(
-                    plugin.getConfigManager().getPrefix(),
-                    "&cThe parameters sent to channel $id's topic change are invalid! Topic changing for that channel will be disabled until a reload",
-                    LogLevel.WARNING
-                )
-                canChangeTopic = false
-            } else if (code == 404) {
-                Utils.logColored(
-                    plugin.getConfigManager().getPrefix(),
-                    "&cChannel with id &4$id &cdoesn't exist! Their topic won't be changed!",
-                    LogLevel.WARNING
-                )
-                destroy()
-            } else if (code == 403) {
-                Utils.logColored(
-                    plugin.getConfigManager().getPrefix(),
-                    "&cThe bot doesn't have access to edit channel &4$id&c's topic! Topic changing for that channel will be disabled until a reload",
-                    LogLevel.WARNING
-                )
-                canChangeTopic = false
+            when (response.code()) {
+                400 -> {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cThe parameters sent to channel $id's topic change are invalid! Topic changing for that channel will be disabled until a reload",
+                        LogLevel.WARNING
+                    )
+                    canChangeTopic = false
+                }
+                404 -> {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cChannel with id &4$id &cdoesn't exist! Their topic won't be changed!",
+                        LogLevel.WARNING
+                    )
+                    destroy()
+                }
+                403 -> {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cThe bot doesn't have access to edit channel &4$id&c's topic! Topic changing for that channel will be disabled until a reload",
+                        LogLevel.WARNING
+                    )
+                    canChangeTopic = false
+                }
             }
             response.close()
         }
