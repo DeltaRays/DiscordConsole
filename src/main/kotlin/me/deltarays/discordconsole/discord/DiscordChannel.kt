@@ -133,7 +133,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
             val channels = configManager.getChannels()
             // Loops through all the channels
             channels.getKeys(false).forEach { channelId ->
-                if (!channelId.startsWith("cmt_")) {
+                if (!channelId.startsWith("cmt_") && channelId.equals("id", true)) {
                     val channel = configManager.getChannel(channelId)
                     val keys = mutableSetOf<LogType>()
                     // Loops through the log types of all channels and adds the right ones to the list

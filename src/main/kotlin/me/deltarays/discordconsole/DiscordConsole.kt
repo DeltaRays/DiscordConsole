@@ -169,12 +169,21 @@ class DiscordConsole : JavaPlugin() {
         )
     }
 
+    var customCommands = HashSet<CustomCommand>();
     var commandMap: CommandMap? = null
     fun registerCustomCommands() {
+        customCommands.forEach { customCommand ->
+            customCommand.unregister(commandMap!!)
+        }
+        customCommands.clear()
+        Bukkit.getOnlinePlayers().forEach { player ->
+            player.updateCommands()
+        }
         val cmdSection = configManager.getCustomCmdSection()
         cmdSection.getKeys(false).forEach { key ->
             if (!key.startsWith("cmt_")) {
                 val value = cmdSection.get(key).toString()
+                customCommands.add(CustomCommand(key, value))
                 commandMap?.register(key, "discordconsole", CustomCommand(key, value))
                 Bukkit.getOnlinePlayers().forEach { player ->
                     player.updateCommands()
