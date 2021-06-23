@@ -29,6 +29,7 @@ object Utils {
      * @param prefix The prefix of the plugin for the logs
      *
      */
+    public val unsentMessages = ArrayList<String>()
     fun logColored(prefix: String, text: String, level: LogLevel) {
         val levelMsg =
             when (level) {
@@ -37,6 +38,10 @@ object Utils {
                 LogLevel.DEBUG -> "&d[DEBUG] &r"
                 else -> ""
             }
+        if (!DiscordConsole.serverHasStartedUp) {
+            unsentMessages.add(tacc(String.format("%s%s %s", levelMsg, prefix, text)))
+            return
+        }
         Bukkit.getConsoleSender()
             .sendMessage(tacc(String.format("%s%s %s", levelMsg, prefix, text)))
     }

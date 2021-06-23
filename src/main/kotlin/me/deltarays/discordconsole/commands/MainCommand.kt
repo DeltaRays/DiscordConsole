@@ -38,7 +38,8 @@ class MainCommand(private val plugin: DiscordConsole) : TabExecutor, Listener {
             if (sender is Player) sender.sendMessage(
                 Utils.tacc(
                     plugin.getConfigManager().getPrefix()
-                ) + " &aChecking for updates..."
+                            + " &aChecking for updates..."
+                )
             )
             else Utils.logColored(plugin.getConfigManager().getPrefix(), " &aChecking for updates...", LogLevel.INFO)
             val (logLevel, message) = plugin.checkUpdates()

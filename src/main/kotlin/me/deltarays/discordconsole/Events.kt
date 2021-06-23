@@ -5,6 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import me.deltarays.discordconsole.discord.DiscordChannel
 import me.deltarays.discordconsole.logging.LogType
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -23,6 +24,10 @@ class Events(private val plugin: DiscordConsole) : Listener {
     @EventHandler
     fun serverStartup(evt: ServerLoadEvent) {
         DiscordConsole.serverHasStartedUp = true
+        for (unsentMessage in Utils.unsentMessages) {
+            Bukkit.getConsoleSender().sendMessage(unsentMessage)
+        }
+        Utils.unsentMessages.clear()
         for (channel in DiscordChannel.channels) {
             if (channel.types.contains(LogType.STARTUP)) {
                 val fmt: String = channel.getMessageFormat(LogType.STARTUP)
@@ -76,7 +81,12 @@ class Events(private val plugin: DiscordConsole) : Listener {
         val p = evt.player
         if (p.isOp || p.hasPermission("discordconsole.admin")) {
             if (DiscordConsole.isFirstLoad)
-                p.sendMessage(Utils.tacc(plugin.getConfigManager().getPrefix() + " &7Thanks for installing DiscordConsole!\n To understand how to use it make sure to check https://github.com/DeltaRays/DiscordConsole/wiki out!"))
+                p.sendMessage(
+                    Utils.tacc(
+                        plugin.getConfigManager()
+                            .getPrefix() + " &7Thanks for installing DiscordConsole!\n To understand how to use it make sure to check https://github.com/DeltaRays/DiscordConsole/wiki out!"
+                    )
+                )
             if (plugin.getConfigManager().shouldCheckUpdates())
                 p.sendMessage(Utils.tacc(plugin.checkUpdates().second))
         }
