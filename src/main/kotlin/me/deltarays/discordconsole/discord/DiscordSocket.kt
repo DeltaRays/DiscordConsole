@@ -41,6 +41,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             val response = try {
                 client.newCall(request).execute()
             } catch (e: Exception) {
+                System.err.println("A connection error was encountered while getting the websocket information!")
                 return null
             }
             val parser = JsonParser()
@@ -77,7 +78,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                 e.printStackTrace()
             } else Utils.logColored(
                 plugin.getConfigManager().getPrefix(),
-                "&c[Discord Connection] Error!\nMessage: &f" + e.message + "\n&cSet debug to true in the config to find out more!",
+                "&c[Discord Connection] Error!\nThe message received wasn't parsed!\nMessage: &f" + e.message + "\n&cSet debug to true in the config to find out more!",
                 LogLevel.SEVERE
             )
             return
@@ -209,6 +210,7 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
             "&a[Discord Connection] Successfully connected!",
             LogLevel.INFO
         )
+        // Only initialize jobs now so that if the bot wasn't successfully connected there wouldn't be any issues (don't worry, the messages before this event will be sent, too)
         for (channel in DiscordChannel.channels) {
             channel.initializeJobs()
         }
@@ -333,7 +335,9 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                     "&e[Discord Connection] Discord encountered an unknown error! Reconnecting...",
                     LogLevel.WARNING
                 )
-                this.reconnect()
+                GlobalScope.launch(Dispatchers.Default) {
+                    reconnect()
+                }
             }
             4001, 4002, 4003, 4005, 4007, 4012, 4013, 4014 -> {
                 Utils.logColored(
@@ -352,7 +356,9 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                     "&e[Discord Connection] The bot was disconnected for doing something too fast! Reconnecting...",
                     LogLevel.WARNING
                 )
-                this.reconnect()
+                GlobalScope.launch(Dispatchers.Default) {
+                    reconnect()
+                }
             }
             4009 -> {
                 Utils.logColored(
@@ -360,7 +366,9 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                     "&e[Discord Connection] The bot timed out! Reconnecting...",
                     LogLevel.INFO
                 )
-                this.reconnect()
+                GlobalScope.launch(Dispatchers.Default) {
+                    reconnect()
+                }
             }
             3333 -> {
                 Utils.logColored(
@@ -368,7 +376,9 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
                     "&e[Discord Connection] The bot was disconnected! Reconnecting...",
                     LogLevel.INFO
                 )
-                this.reconnect()
+                GlobalScope.launch(Dispatchers.Default) {
+                    reconnect()
+                }
             }
         }
 
