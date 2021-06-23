@@ -6,7 +6,7 @@ plugins {
 
 group "me.deltarays"
 
-val VERSION = "1.4.1"
+val VERSION = "1.4.2"
 version = VERSION
 
 repositories {
