@@ -12,6 +12,7 @@ import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.LinkedBlockingQueue
 
@@ -26,7 +27,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
     var guild: DiscordGuild? = null
     private var hasData = false
     lateinit var name: String
-    lateinit var topic: String
+    var topic: String = ""
 
     init {
         channels.add(this)
@@ -81,7 +82,17 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                     .addHeader("Authorization", "Bot ${plugin.getConfigManager().getBotToken()}")
                     .addHeader("Accept", "application/json")
                     .build()
-                val response = client.newCall(request).execute()
+
+                val response = try {
+                    client.newCall(request).execute()
+                } catch (exc: IOException) {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cA connection error was encountered while getting channel $id data!",
+                        LogLevel.SEVERE
+                    )
+                    return@launch
+                }
                 val code = response.code()
                 if (code == 404) {
                     Utils.logColored(
@@ -120,7 +131,7 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                 guild!!.channels.add(this@DiscordChannel)
                 hasData = true
                 name = json.get("name").asString
-                topic = if (json.has("topic")) json.get("topic").asString else ""
+                topic = if (json.has("topic") && !json.get("topic").isJsonNull) json.get("topic").asString else ""
                 response.close()
                 val topic = getConfigTopic()
                 if (topic != null)
@@ -189,7 +200,12 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                     .post(body)
                     .addHeader("Authorization", "Bot $botToken")
                     .build()
-                val response = client.newCall(request).execute()
+                val response = try {
+                    client.newCall(request).execute()
+                } catch (exc: IOException) {
+                    System.err.println("A connection error was encountered while sending a message to channel $channelId")
+                    return@async 0
+                }
                 val code = response.code()
                 response.close()
                 return@async code
@@ -259,7 +275,16 @@ class DiscordChannel(val id: String, private val plugin: DiscordConsole, var typ
                 .patch(body)
                 .addHeader("Authorization", "Bot ${plugin.getConfigManager().getBotToken()}")
                 .build()
-            val response = client.newCall(request).execute()
+            val response = try {
+                client.newCall(request).execute()
+            } catch (exc: IOException) {
+                Utils.logColored(
+                    plugin.getConfigManager().getPrefix(),
+                    "&cA connection error was encountered while getting guild $id data!",
+                    LogLevel.SEVERE
+                )
+                return@withContext
+            }
             when (response.code()) {
                 400 -> {
                     Utils.logColored(
