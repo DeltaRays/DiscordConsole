@@ -8,7 +8,6 @@ import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import org.bukkit.metadata.MetadataValue
-import java.util.*
 
 
 /**
@@ -73,7 +72,7 @@ object Utils {
                 put("guild_name", guild.name)
                 put("guild_id", guild.id)
                 put("guild_members", guild.memberCount.toString())
-                put("guild_description", guild.description ?: "")
+                put("guild_description", guild.description)
             }
             if (memberUser != null) {
                 val username = memberUser.second.get("username").asString

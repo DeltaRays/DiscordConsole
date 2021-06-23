@@ -1,7 +1,7 @@
 main: me.deltarays.discordconsole.DiscordConsole
 name: DiscordConsole
 api-version: 1.16
-version: 1.4.1
+version: 1.4.2
 load: STARTUP
 author: DeltaRays
 description: Connect your minecraft console to a discord channel!
