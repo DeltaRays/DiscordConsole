@@ -7,6 +7,7 @@ import me.deltarays.discordconsole.LogLevel
 import me.deltarays.discordconsole.Utils
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
 
 class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
@@ -19,7 +20,7 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
     private var hasData = false
     lateinit var name: String
     var memberCount: Int? = null // approximate_member_count in json
-    var description: String? = null
+    var description: String = ""
     fun destroy() {
         getDataJob.cancel()
         guilds.removeIf { guild -> guild == this }
@@ -35,7 +36,16 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
                     .addHeader("Authorization", "Bot ${plugin.getConfigManager().getBotToken()}")
                     .addHeader("Accept", "application/json")
                     .build()
-                val response = client.newCall(request).execute()
+                val response = try {
+                    client.newCall(request).execute()
+                } catch (exc: IOException) {
+                    Utils.logColored(
+                        plugin.getConfigManager().getPrefix(),
+                        "&cA connection error was encountered while getting guild $id data!",
+                        LogLevel.SEVERE
+                    )
+                    return@launch
+                }
                 val code = response.code()
                 if (code == 404) {
                     Utils.logColored(
@@ -60,7 +70,7 @@ class DiscordGuild(val id: String, private val plugin: DiscordConsole) {
                 response.close()
                 hasData = true
                 name = json.get("name").asString
-                description = if (!json.has("description")) "" else json.get("description").asString
+                description = if (json.get("description").isJsonNull) "" else json.get("description").asString
                 memberCount = json.get("approximate_member_count").asInt
                 delay(20000)
             }

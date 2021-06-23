@@ -143,6 +143,13 @@ class DiscordConsole : JavaPlugin() {
     }
 
     fun checkUpdates(): Pair<LogLevel, String> {
+        if (!hasInternetConnection()) {
+            Utils.logColored(
+                configManager.getPrefix(),
+                "&cDiscordConsole only works if you're connected to the internet!!",
+                LogLevel.SEVERE
+            )
+        }
         val request =
             Request.Builder().url("https://api.github.com/repos/DeltaRays/DiscordConsole/releases").build()
         val response = client.newCall(request).execute()
@@ -159,7 +166,7 @@ class DiscordConsole : JavaPlugin() {
                 LogLevel.WARNING,
                 "&cApparently you have a plugin version that doesn't exist in the releases list. Either you're in an experimental build or something is wrong. If you're not in an experimental build then you should download the latest release here: &b&nhttps://www.spigotmc.org/resources/discordconsole.77503/"
             )
-        } else if (versions.getOrNull(0) === description.version) {
+        } else if (versions.getOrNull(0) == description.version) {
             Pair(LogLevel.INFO, "&aYou're using the latest DiscordConsole version!")
         } else Pair(
             LogLevel.INFO,
