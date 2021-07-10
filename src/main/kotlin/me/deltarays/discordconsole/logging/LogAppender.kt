@@ -8,6 +8,7 @@ import org.apache.logging.log4j.core.appender.AbstractAppender
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.*
 import java.util.regex.Pattern
 
 class LogAppender(private var plugin: DiscordConsole) :
@@ -24,16 +25,24 @@ class LogAppender(private var plugin: DiscordConsole) :
         } catch (e: NoSuchMethodException) {
             null
         }
-        logEvt = try {
-            method?.invoke(event) as LogEvent?
-        } catch (e: Exception) {
+        logEvt = if (method != null) {
+            try {
+                method.invoke(event) as LogEvent?
+            } catch (exc: Exception) {
+                event
+            }
+        } else {
             event
-
         }
         val timeMillis: Long = try {
             LogEvent::class.java.getMethod("getTimeMillis").invoke(logEvt)
         } catch (e: Exception) {
-            LogEvent::class.java.getMethod("getMillis").invoke(logEvt)
+            println(LogEvent::class.java.methods.joinToString(", ") { m -> m.name })
+            try {
+                LogEvent::class.java.getMethod("getMillis").invoke(logEvt)
+            } catch (exc :Exception){
+                Date().time
+            }
         } as Long
         val message = logEvt?.message?.formattedMessage as String
         for (channel in DiscordChannel.channels) {
