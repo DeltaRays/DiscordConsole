@@ -228,6 +228,9 @@ class DiscordSocket(uri: URI) : WebSocketClient(uri) {
         val d = payload.get("d").asJsonObject
         val channelId = d.get("channel_id").asString
         val content = d.get("content").asString.replace("\\\\\"", "\"").replace("\\\\\\\\", "\\\\")
+        if (d.get("guild_id") == null || d.get("guild_id").isJsonNull) {
+            return@launch
+        }
         val author = d.get("author").asJsonObject
         val authorId = author.get("id").asString
         val channel = DiscordChannel.channels.find { c ->
