@@ -37,7 +37,6 @@ class LogAppender(private var plugin: DiscordConsole) :
         val timeMillis: Long = try {
             LogEvent::class.java.getMethod("getTimeMillis").invoke(logEvt)
         } catch (e: Exception) {
-            println(LogEvent::class.java.methods.joinToString(", ") { m -> m.name })
             try {
                 LogEvent::class.java.getMethod("getMillis").invoke(logEvt)
             } catch (exc :Exception){
